@@ -4,21 +4,24 @@
       "id": "system_intro",
       "trigger": "boot",
       "title": "O Sistema",
-      "text": "Você está conectado a um sistema secreto. Os portais da cidade são suas missões: enfrente as ondas, fortaleça sua equipe e suba de nível. Só você pode vê-lo."
+      "text": "Você está conectado a um sistema secreto. Os portais da cidade são suas missões: enfrente as ondas, fortaleça sua equipe e suba de nível. Só você pode vê-lo.",
+      "art": "res://assets/story/story_system_intro.svg"
     },
     {
       "id": "first_advance",
       "trigger": "gate_cleared",
       "gate": 1,
       "title": "Primeiro portal concluído",
-      "text": "O Sistema reconhece seu avanço. Portais mais difíceis se abriram e novas recompensas esperam do outro lado. Cada vitória torna sua equipe mais forte."
+      "text": "O Sistema reconhece seu avanço. Portais mais difíceis se abriram e novas recompensas esperam do outro lado. Cada vitória torna sua equipe mais forte.",
+      "art": "res://assets/story/story_first_advance.svg"
     },
     {
       "id": "shadow_troop",
       "trigger": "gate_cleared",
       "gate": 2,
       "title": "A tropa de sombras cresce",
-      "text": "Uma nova sombra jura lealdade a você e entra na formação. Use a aba Sombras para montar a equipe: Jinwoo e até três sombras em cada batalha."
+      "text": "Uma nova sombra jura lealdade a você e entra na formação. Use a aba Sombras para montar a equipe: Jinwoo e até três sombras em cada batalha.",
+      "art": "res://assets/story/story_shadow_troop.svg"
     }
   ]
 }

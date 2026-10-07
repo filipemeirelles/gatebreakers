@@ -38,6 +38,8 @@ adb install -r build\gatebreakers-debug.apk
 adb shell monkey -p com.gatebreakers.prototype -c android.intent.category.LAUNCHER 1
 ```
 
+O projeto está na versão `0.2.0` (Android `versionCode=2`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
+
 Comandos úteis de diagnóstico:
 
 ```powershell
@@ -59,9 +61,9 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Resultado real da última execução (06/10/2026): `=== RESULTADO: 222 passaram, 0 falharam ===`, exit 0**, smoke `--quit-after 120` exit 0, export exit 0.
+**Resultado real da última execução (06/10/2026): `=== RESULTADO: 238 passaram, 0 falharam ===`, exit 0**, smoke `--quit-after 120` exit 0, export Android exit 0; APK `0.2.0` (code 2) instalado no aparelho `RXCT301TRHY`.
 
-Suites (6): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
+Suites (7): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
 
 ## 4. Estado das fases (spec §9)
@@ -73,12 +75,13 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 2 Combate e progressão | concluída | testes de combate/resultados verdes; verificado no aparelho |
 | 3 Recompensas AFK | concluída | testes AFK verdes; verificado no aparelho ("tudo ok" de Filipe) |
 | 4 Melhorias e sombras | concluída | testes melhorias verdes (migração de save incluída); verificado no aparelho |
-| 5 Cartões, configurações, acessibilidade e validação Android | concluída (validação em aparelho pendente de sessão final) | suíte 222/222, smoke e export verdes |
+| 5 Cartões, configurações, acessibilidade e validação Android | concluída | testes e instalação no aparelho confirmados |
+| 6 Visual e gamefeel v0.2 | primeira entrega concluída | retratos SVG por onda, cenário de batalha, animações de golpes/dano, ícones e tema; suíte 238/238; Filipe confirmou teste visual positivo |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
 - **Sem áudio real**: toggles de som/vibração guardam a preferência (`user://settings.cfg`) mas não existem sons/haptics implementados.
-- **Arte temporária**: placeholders (formas/ícones de texto), sem assets de arte; nada de conteúdo protegido de *Solo Leveling* (texto próprio PT-BR).
+- **Arte temporária**: retratos e ilustrações SVG originais já integrados às telas; ainda são arte vetorial de protótipo, não animação quadro a quadro nem ilustração final. Nada de conteúdo protegido de *Solo Leveling* foi incorporado.
 - **Relógio local manipulável**: recompensas AFK baseiam-se no relógio do aparelho (aceite no §11 para protótipo offline).
 - **Sem serviços online**: nenhuma função depende de internet (critério 12); sem contas/nuvem/leaderboards.
 - **Decisão de design**: varredura de portal de chefe já concluído concede a essência do chefe (1 linha de código se Filipe quiser mudar).
@@ -94,10 +97,11 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 - `scripts/systems/idle_reward_service.gd` — cálculo AFK puro.
 - `scripts/systems/settings_service.gd` — preferências locais.
 - `scripts/systems/content_db.gd` + `data/*.json` — unidades, portais, cartões narrativos.
+- `scripts/ui/art_helper.gd` + `assets/` — carregamento e apresentação da arte vetorial original.
 - `scripts/ui/navigation_controller.gd` — telas/overlays, cartões pendentes, áreas seguras.
-- `scenes/**` — UI apenas desenha estado e encaminha ações (sem lógica económica).
+- `scenes/**` — UI apresenta o estado, efeitos visuais e encaminha ações (sem lógica económica); `CombatService` continua sendo a fonte determinística dos resultados.
 - `tests/runner.tscn` — suíte headless; novos testes: criar `tests/test_*.gd` e registar em `test_runner.gd`.
 
 ## 7. Próximo passo
 
-Validação final em aparelho real (sessão de teste curta, critérios §10.1/10.12/10.14): cartões narrativos, configurações/reset, modo avião, áreas seguras 9:16 e 20:9, sem crash, desempenho dentro da meta — e entrega do resumo final a Filipe.
+Próximo passo: jogar batalhas no APK `0.2.0` e recolher feedback de ritmo/clareza dos golpes. Depois decidir se refinamos a arte SVG, incluímos animações/efeitos adicionais ou retomamos áudio e vibração (adiados nesta etapa).

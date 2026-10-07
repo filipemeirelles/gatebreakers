@@ -33,10 +33,73 @@ theme_override_colors/font_color = Color(0.486, 0.247, 0.949, 1)
 theme_override_font_sizes/font_size = 30
 text = "Portais"
 
-[node name="StatsLabel" type="Label" parent="Margin/VBox"]
+[node name="StatsRow" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
-text = "…"
+theme_override_constants/separation = 5
+
+[node name="LevelStat" type="HBoxContainer" parent="Margin/VBox/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="LevelIcon" type="TextureRect" parent="Margin/VBox/StatsRow/LevelStat"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="LevelValue" type="Label" parent="Margin/VBox/StatsRow/LevelStat"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "1"
+
+[node name="GoldStat" type="HBoxContainer" parent="Margin/VBox/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="GoldIcon" type="TextureRect" parent="Margin/VBox/StatsRow/GoldStat"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="GoldValue" type="Label" parent="Margin/VBox/StatsRow/GoldStat"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "100"
+
+[node name="XpStat" type="HBoxContainer" parent="Margin/VBox/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="XpIcon" type="TextureRect" parent="Margin/VBox/StatsRow/XpStat"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="XpValue" type="Label" parent="Margin/VBox/StatsRow/XpStat"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "0"
+
+[node name="EssenceStat" type="HBoxContainer" parent="Margin/VBox/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="EssenceIcon" type="TextureRect" parent="Margin/VBox/StatsRow/EssenceStat"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="EssenceValue" type="Label" parent="Margin/VBox/StatsRow/EssenceStat"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "0"
 
 [node name="BestLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2

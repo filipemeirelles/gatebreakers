@@ -6,8 +6,10 @@ extends Control
 ## Janela do toque duplo no "Continuar": o cartão seguinte troca por baixo do
 ## mesmo botão, por isso um segundo toque rápido não pode fechá-lo (§7).
 const DOUBLE_TAP_MS := 400
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 
 @onready var title_label: Label = $Margin/VBox/TitleLabel
+@onready var story_image: TextureRect = $Margin/VBox/StoryImage
 @onready var text_label: Label = $Margin/VBox/TextLabel
 @onready var continue_button: Button = $Margin/VBox/ContinueButton
 
@@ -23,6 +25,7 @@ func _ready() -> void:
 func configure(data: Dictionary) -> void:
 	var card := ContentDB.story_card(str(data.get("id", "")))
 	title_label.text = str(card.get("title", ""))
+	story_image.texture = ArtHelper.texture(String(card.get("art", "")))
 	text_label.text = str(card.get("text", ""))
 
 

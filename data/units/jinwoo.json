@@ -7,6 +7,6 @@
   "base_attack": 20,
   "base_defense": 6,
   "base_speed": 10,
-  "art": "res://assets/placeholders/unit_jinwoo.svg",
+  "art": "res://assets/units/jinwoo.svg",
   "unlock": { "type": "start" }
 }

@@ -11,6 +11,13 @@ static func run(t: Node) -> void:
 	var screens: Node = main.get_node("Screens")
 	var overlays: Node = main.get_node("Overlays")
 	var nav := main as NavigationController
+	var hero_portrait: TextureRect = screens.get_node("Hunter/Margin/VBox/HeroPortrait")
+	t.check(hero_portrait.texture != null, "tela do Caçador mostra arte de Jinwoo")
+	var shadow_list: VBoxContainer = screens.get_node("Shadows/Margin/VBox/Scroll/UnitList")
+	var shadow_portrait: TextureRect = shadow_list.get_child(0).get_node("Content/Portrait")
+	t.check(shadow_portrait.texture != null, "tela de Sombras mostra retrato da unidade")
+	var portal_icon: TextureRect = screens.get_node("Portals/Margin/VBox/StatsRow/GoldStat/GoldIcon")
+	t.check(portal_icon.texture != null, "mapa de portais mostra ícone de recurso")
 
 	t.check(screens.get_child_count() == 4, "4 telas filhas criadas")
 	t.check(overlays.get_child_count() == 5, "5 overlays criados")
@@ -33,6 +40,10 @@ static func run(t: Node) -> void:
 
 	nav.show_overlay("gate_prep")
 	t.check(overlays.get_node("GatePrep").visible, "overlay gate_prep abre")
+	var prep_enemy: TextureRect = overlays.get_node("GatePrep/Margin/VBox/PreviewRow/EnemyPortrait")
+	t.check(prep_enemy.texture != null, "preparação mostra arte do inimigo")
+	t.check(overlays.get_node("GatePrep/Margin/VBox/PreviewRow/TeamPreview").get_child_count() == 2,
+		"preparação mostra retratos da formação")
 	nav.close_overlay("gate_prep")
 	t.check(not overlays.get_node("GatePrep").visible, "overlay gate_prep fecha")
 

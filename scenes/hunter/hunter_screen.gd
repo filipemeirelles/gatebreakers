@@ -3,6 +3,9 @@ extends Control
 ## A melhoria (spec §4/Fase 4) mostra nível atual, custo, nível/atributos
 ## previstos e botão de confirmação; bloqueada com recurso em falta.
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+
+@onready var hero_portrait: TextureRect = $Margin/VBox/HeroPortrait
 @onready var level_label: Label = $Margin/VBox/LevelLabel
 @onready var xp_label: Label = $Margin/VBox/XpLabel
 @onready var cost_label: Label = $Margin/VBox/CostLabel
@@ -21,6 +24,8 @@ var _last_upgrade_ms: int = -100000
 func _ready() -> void:
 	GameState.state_changed.connect(_refresh)
 	$Margin/VBox/Title.text = Loc.t("hunter.title")
+	ArtHelper.configure_rect(hero_portrait, ArtHelper.unit_texture("jinwoo"), Vector2(176, 188))
+	hero_portrait.tooltip_text = "Sung Jinwoo"
 	upgrade_button.pressed.connect(_on_upgrade)
 	_refresh()
 

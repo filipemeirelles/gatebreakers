@@ -23,13 +23,37 @@ static func run(t: Node) -> void:
 	t.check(battle.wave_label.text == ("%s 1 / 3" % Loc.t("battle.wave")), "mostra a onda atual 1 / 3")
 	t.check(battle.enemies_box.get_child_count() == 2, "2 inimigos desenhados na 1.ª onda")
 	t.check(battle.allies_box.get_child_count() == 2, "2 unidades da equipe desenhadas")
-	t.check(battle.log_label.text == "", "sem ação antes do primeiro passo")
+	t.check(battle.log_label.text == Loc.t("battle.ready"), "mostra chamada visual antes do primeiro passo")
+	var first_enemy_id := String(battle._state["enemies"][0]["id"])
+	var enemy_row: Dictionary = battle._rows["enemy:%s" % first_enemy_id]
+	t.check(enemy_row["portrait"] is TextureRect and enemy_row["portrait"].texture != null,
+		"inimigo recebe retrato SVG da batalha")
+	var first_ally_id := String(battle._state["allies"][0]["id"])
+	var ally_row: Dictionary = battle._rows["ally:%s" % first_ally_id]
+	t.check(ally_row["portrait"] is TextureRect and ally_row["portrait"].texture != null,
+		"aliado recebe retrato definido nos dados da unidade")
+	battle._advance()
+	t.check(not battle.log_label.text.is_empty(), "primeiro golpe atualiza feedback da batalha")
+	t.check(battle.fx_layer.get_child_count() == 1, "golpe cria número de dano flutuante")
+	var wave_steps := 0
+	while int(battle._state["wave_index"]) == 0 and wave_steps < 100:
+		battle._advance()
+		wave_steps += 1
+	t.check(int(battle._state["wave_index"]) == 1, "primeira onda avança para a seguinte")
+	var second_wave_enemy_id := String(battle._state["enemies"][0]["id"])
+	battle._advance()
+	t.check(battle._rows.has("enemy:%s" % second_wave_enemy_id),
+		"retratos inimigos são reconstruídos ao iniciar a próxima onda")
 
 	_drive(battle)
 	t.check(battle._finished, "batalha termina por si")
 	t.check(not battle.visible, "combate fecha ao terminar")
 	t.check(result.visible, "resultado abre ao terminar")
 	t.check(result.title_label.text == Loc.t("result.victory", "Vitória"), "resultado mostra vitória")
+	t.check(result.result_portrait.texture != null, "resultado de vitória mostra retrato do caçador")
+	t.check(result.reward_strip.visible
+		and result.get_node("Margin/VBox/RewardStrip/GoldReward/GoldIcon").texture != null,
+		"resultado organiza recompensas com ícones")
 	var expected_rewards := "+%d %s · +%d %s" % [
 		BalanceConfig.victory_gold(1, 6), Loc.t("ui.gold"),
 		BalanceConfig.victory_xp(1, 6), Loc.t("ui.xp"),
@@ -51,6 +75,7 @@ static func run(t: Node) -> void:
 	_drive(battle)
 	t.check(result.visible and result.title_label.text == Loc.t("result.defeat", "Derrota"),
 		"resultado mostra derrota")
+	t.check(result.result_portrait.texture != null, "resultado de derrota mostra retrato inimigo")
 	t.check(result.rewards_label.text == Loc.t("result.no_reward"), "derrota explica que não há recompensa")
 	t.check(GameState.gold == 100 and GameState.highest_gate_cleared == 0,
 		"derrota não concede recursos nem progressão")

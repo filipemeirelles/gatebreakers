@@ -2,14 +2,20 @@ extends Control
 ## Relatório AFK (spec §5.2): tempo contado, limite aplicado quando houver,
 ## recompensas detalhadas e portal/taxa utilizados (critério §10.9).
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+
 @onready var time_label: Label = $Margin/VBox/TimeLabel
 @onready var rewards_label: Label = $Margin/VBox/RewardsLabel
+@onready var gold_amount: Label = $Margin/VBox/RewardsStrip/GoldReward/GoldAmount
+@onready var xp_amount: Label = $Margin/VBox/RewardsStrip/XpReward/XpAmount
 @onready var rate_label: Label = $Margin/VBox/RateLabel
 
 
 func _ready() -> void:
 	$Margin/VBox/Title.text = Loc.t("afk.title")
 	$Margin/VBox/ContinueButton.text = Loc.t("ui.continue")
+	ArtHelper.configure_rect($Margin/VBox/RewardsStrip/GoldReward/GoldIcon, ArtHelper.texture("res://assets/icons/icon_gold.svg"), Vector2(42, 42))
+	ArtHelper.configure_rect($Margin/VBox/RewardsStrip/XpReward/XpIcon, ArtHelper.texture("res://assets/icons/icon_xp.svg"), Vector2(42, 42))
 	$Margin/VBox/ContinueButton.pressed.connect(_on_continue)
 
 
@@ -21,11 +27,9 @@ func configure(data: Dictionary) -> void:
 		var cap_hours := int(BalanceConfig.afk_cap_seconds() / 3600)
 		time_label.text += "\n" + (Loc.t("afk.capped") % cap_hours)
 
-	var parts: Array = [
-		"+%d %s" % [int(data.get("gold", 0)), Loc.t("ui.gold")],
-		"+%d %s" % [int(data.get("xp", 0)), Loc.t("ui.xp")],
-	]
-	rewards_label.text = "%s %s" % [Loc.t("afk.gained"), " · ".join(parts)]
+	rewards_label.text = Loc.t("afk.gained")
+	gold_amount.text = "+%d %s" % [int(data.get("gold", 0)), Loc.t("ui.gold")]
+	xp_amount.text = "+%d %s" % [int(data.get("xp", 0)), Loc.t("ui.xp")]
 
 	rate_label.text = Loc.t("afk.rate") % [
 		int(data.get("gate", 0)),

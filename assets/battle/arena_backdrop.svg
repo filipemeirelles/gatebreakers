@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" width="720" height="1280">
+  <defs>
+    <radialGradient id="void" cx="50%" cy="39%" r="75%">
+      <stop offset="0%" stop-color="#17214a"/>
+      <stop offset="54%" stop-color="#090d20"/>
+      <stop offset="100%" stop-color="#03050c"/>
+    </radialGradient>
+    <radialGradient id="gate" cx="50%" cy="48%" r="58%">
+      <stop offset="0%" stop-color="#04101d" stop-opacity="0.1"/>
+      <stop offset="58%" stop-color="#071326" stop-opacity="0.38"/>
+      <stop offset="79%" stop-color="#23d9ff" stop-opacity="0.88"/>
+      <stop offset="88%" stop-color="#7c3aed" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#081020" stop-opacity="0.08"/>
+    </radialGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#121a36" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#10172b" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="720" height="1280" fill="url(#void)"/>
+  <path d="M84 545V342C84 185 207 78 360 78s276 107 276 264v203" fill="none" stroke="#253457" stroke-width="34" opacity="0.55"/>
+  <path d="M116 533V350c0-139 107-238 244-238s244 99 244 238v183" fill="none" stroke="#60709b" stroke-width="3" opacity="0.48"/>
+  <ellipse cx="360" cy="396" rx="246" ry="300" fill="url(#gate)" opacity="0.72"/>
+  <ellipse cx="360" cy="396" rx="172" ry="226" fill="none" stroke="#55e7ff" stroke-width="3" opacity="0.46"/>
+  <ellipse cx="360" cy="396" rx="148" ry="199" fill="none" stroke="#a78bfa" stroke-width="2" opacity="0.38"/>
+  <path d="M360 175v444M208 396h304M252 245l216 302M468 245 252 547" stroke="#92f5ff" stroke-width="1" opacity="0.11"/>
+  <path d="M40 780h640M90 838h540M155 900h410M220 964h280" stroke="#7182b2" stroke-width="2" opacity="0.14"/>
+  <path d="M0 650 720 650 720 1280 0 1280Z" fill="url(#floor)"/>
+  <path d="M0 1030 360 852 720 1030M0 1140 360 952 720 1140M0 1240 360 1060 720 1240" fill="none" stroke="#415071" stroke-width="3" opacity="0.12"/>
+  <g fill="#b9f7ff">
+    <circle cx="143" cy="272" r="3" opacity="0.7"/><circle cx="562" cy="217" r="2" opacity="0.8"/>
+    <circle cx="214" cy="510" r="2" opacity="0.55"/><circle cx="508" cy="468" r="3" opacity="0.65"/>
+    <circle cx="92" cy="606" r="2" opacity="0.45"/><circle cx="622" cy="578" r="2" opacity="0.55"/>
+  </g>
+</svg>

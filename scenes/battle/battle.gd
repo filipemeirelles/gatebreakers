@@ -1,23 +1,26 @@
 extends Control
-## Combate (spec §5.4): onda atual, unidades com vida, feedback de ações,
-## velocidade x1/x2, pausa e saída sem recompensa.
+## Combate visual: retratos, barras de vida e feedback animado de ações.
 ##
 ## A velocidade só altera a apresentação (frequência de passos); os cálculos
 ## vêm do CombatService e são determinísticos (spec §4/§10.5). A batalha é
 ## simulada apenas enquanto este overlay está visível (primeiro plano).
 ## O fim da batalha encaminha para o resultado; só aí se credita recompensa.
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 const STEP_SECONDS := 0.45
+const CARD_MIN_WIDTH := 148.0
+const PORTRAIT_SIZE := 126.0
 
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var wave_label: Label = $Margin/VBox/WaveLabel
-@onready var enemies_box: VBoxContainer = $Margin/VBox/EnemiesBox
-@onready var allies_box: VBoxContainer = $Margin/VBox/AlliesBox
-@onready var log_label: Label = $Margin/VBox/LogLabel
+@onready var enemies_box: HBoxContainer = $Margin/VBox/EnemiesBox
+@onready var allies_box: HBoxContainer = $Margin/VBox/AlliesBox
+@onready var log_label: Label = $Margin/VBox/LogPanel/LogLabel
 @onready var pause_button: Button = $Margin/VBox/Controls/PauseButton
 @onready var speed_button: Button = $Margin/VBox/Controls/SpeedButton
 @onready var exit_hint: Label = $Margin/VBox/ExitHintLabel
 @onready var exit_button: Button = $Margin/VBox/ExitButton
+@onready var fx_layer: Control = $FxLayer
 
 var _gate: int = 0
 var _state: Dictionary = {}
@@ -25,14 +28,17 @@ var _acc: float = 0.0
 var _paused: bool = false
 var _speed: int = 1
 var _finished: bool = false
+var _displayed_wave_index: int = -1
 ## chave "lado:id" -> { "bar", "hp_label", "name_label" }
 var _rows: Dictionary = {}
+var _node_tweens: Dictionary = {}
 
 
 func _ready() -> void:
 	title_label.text = Loc.t("battle.title")
 	$Margin/VBox/EnemiesTitle.text = Loc.t("battle.enemies")
 	$Margin/VBox/AlliesTitle.text = Loc.t("battle.allies")
+	$Margin/VBox/ClashBanner/ClashLabel.text = Loc.t("battle.confrontation")
 	pause_button.text = Loc.t("battle.pause")
 	exit_hint.text = Loc.t("battle.exit_hint")
 	exit_button.text = Loc.t("ui.exit_battle")
@@ -43,7 +49,9 @@ func _ready() -> void:
 
 ## Chamado pela navegação antes de mostrar o overlay: inicia uma batalha nova.
 func configure(data: Dictionary) -> void:
+	_stop_animations()
 	_gate = int(data.get("gate", GameState.current_gate()))
+	title_label.text = "%s %d" % [Loc.t("ui.gate"), _gate]
 	var gate_def := ContentDB.gate(_gate)
 	_state = CombatService.start_battle(GameState.team_units(), gate_def)
 	_paused = false
@@ -52,7 +60,10 @@ func configure(data: Dictionary) -> void:
 	_acc = 0.0
 	pause_button.text = Loc.t("battle.pause")
 	speed_button.text = "x1"
-	log_label.text = ""
+	log_label.text = Loc.t("battle.ready")
+	for child in fx_layer.get_children():
+		fx_layer.remove_child(child)
+		child.queue_free()
 	_build_rows()
 	_render()
 
@@ -69,12 +80,18 @@ func _process(delta: float) -> void:
 
 
 func _advance() -> void:
-	if _state.is_empty() or CombatService.is_finished(_state):
+	if _state.is_empty():
+		return
+	if int(_state["wave_index"]) != _displayed_wave_index:
+		_build_rows()
+		_render()
+	if CombatService.is_finished(_state):
 		return
 	var ev: Dictionary = CombatService.step(_state)
 	if not ev.is_empty():
 		_log_event(ev)
-	_render()
+		_render()
+		_animate_event(ev)
 	if CombatService.is_finished(_state):
 		_finish()
 
@@ -89,6 +106,7 @@ func _log_event(ev: Dictionary) -> void:
 	elif outcome == "wave":
 		# O evento já aponta para a onda seguinte; a onda concluída é a anterior.
 		log_label.text = Loc.t("battle.wave_done") % (int(ev["wave"]) - 1)
+		_pulse_wave()
 	elif outcome == "victory":
 		log_label.text = Loc.t("result.victory")
 	elif outcome == "defeat":
@@ -118,6 +136,8 @@ func _render_side(units: Array, side: String) -> void:
 		hp_label.text = "%d/%d" % [hp, max_hp]
 		var name_label: Label = row["name_label"]
 		name_label.modulate = Color(1, 1, 1) if hp > 0 else Color(1, 1, 1, 0.4)
+		var portrait: TextureRect = row["portrait"]
+		portrait.modulate = Color.WHITE if hp > 0 else Color(0.46, 0.49, 0.58, 0.52)
 
 
 ## Vitória credita recompensa/progressão via GameState.resolve_battle_end
@@ -168,6 +188,7 @@ func _on_exit() -> void:
 
 func _build_rows() -> void:
 	_rows.clear()
+	_displayed_wave_index = int(_state.get("wave_index", 0))
 	_clear_box(enemies_box)
 	_clear_box(allies_box)
 	for unit in _state["enemies"]:
@@ -176,41 +197,183 @@ func _build_rows() -> void:
 		allies_box.add_child(_make_row("ally", unit, true))
 
 
-func _clear_box(box: VBoxContainer) -> void:
+func _clear_box(box: Control) -> void:
 	for child in box.get_children():
 		box.remove_child(child)
 		child.queue_free()
 
 
-func _make_row(side: String, unit: Dictionary, is_ally: bool) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+func _make_row(side: String, unit: Dictionary, is_ally: bool) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(CARD_MIN_WIDTH, 206)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Color(0.025, 0.045, 0.09, 0.88) if is_ally else Color(0.09, 0.035, 0.065, 0.9)
+	panel.border_color = Color(0.12, 0.8, 0.98, 0.52) if is_ally else Color(0.97, 0.24, 0.37, 0.58)
+	panel.set_border_width_all(1)
+	panel.set_corner_radius_all(14)
+	panel.content_margin_left = 7
+	panel.content_margin_top = 8
+	panel.content_margin_right = 7
+	panel.content_margin_bottom = 8
+	card.add_theme_stylebox_override("panel", panel)
+
+	var column := VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 5)
+	card.add_child(column)
+
+	var portrait := TextureRect.new()
+	ArtHelper.configure_rect(portrait, _portrait_for(unit, is_ally), Vector2(PORTRAIT_SIZE, PORTRAIT_SIZE))
+	portrait.name = "Portrait"
+	portrait.pivot_offset = Vector2(PORTRAIT_SIZE * 0.5, PORTRAIT_SIZE * 0.5)
+	portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	column.add_child(portrait)
 
 	var name_label := Label.new()
-	name_label.custom_minimum_size = Vector2(196, 0)
-	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", Color(0.9, 0.94, 1.0))
 	name_label.text = str(unit.get("display_name", unit.get("id", "?")))
-	row.add_child(name_label)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.clip_text = true
+	column.add_child(name_label)
 
 	var bar := ProgressBar.new()
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.custom_minimum_size = Vector2(0, 18)
+	bar.custom_minimum_size = Vector2(0, 11)
 	bar.show_percentage = false
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color(0.35, 0.85, 0.55) if is_ally else Color(0.95, 0.4, 0.45)
+	fill.bg_color = Color(0.12, 0.88, 0.96) if is_ally else Color(0.98, 0.28, 0.36)
+	fill.set_corner_radius_all(5)
 	bar.add_theme_stylebox_override("fill", fill)
 	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.13, 0.14, 0.2)
+	background.bg_color = Color(0.035, 0.045, 0.075)
+	background.set_corner_radius_all(5)
 	bar.add_theme_stylebox_override("background", background)
-	row.add_child(bar)
+	column.add_child(bar)
 
 	var hp_label := Label.new()
-	hp_label.custom_minimum_size = Vector2(96, 0)
-	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hp_label.add_theme_font_size_override("font_size", 14)
-	row.add_child(hp_label)
+	hp_label.add_theme_font_size_override("font_size", 12)
+	hp_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.94))
+	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(hp_label)
 
 	_rows["%s:%s" % [side, str(unit.get("id", ""))]] = {
-		"bar": bar, "hp_label": hp_label, "name_label": name_label,
+		"bar": bar,
+		"hp_label": hp_label,
+		"name_label": name_label,
+		"portrait": portrait,
+		"card": card,
 	}
-	return row
+	return card
+
+
+func _portrait_for(unit: Dictionary, is_ally: bool) -> Texture2D:
+	if is_ally:
+		return ArtHelper.unit_texture(String(unit.get("id", "")))
+	return ArtHelper.enemy_texture(String(unit.get("role", "")) == "boss")
+
+
+func _animate_event(ev: Dictionary) -> void:
+	if String(ev.get("type", "")) != "attack":
+		if String(ev.get("outcome", "")) == "victory":
+			_pulse_wave()
+		return
+
+	var attacker: Dictionary = ev["attacker"]
+	var target: Dictionary = ev["target"]
+	var attacker_row: Dictionary = _rows.get(
+		"%s:%s" % [String(attacker.get("side", "")), String(attacker.get("id", ""))], {}
+	)
+	var target_row: Dictionary = _rows.get(
+		"%s:%s" % [String(target.get("side", "")), String(target.get("id", ""))], {}
+	)
+	if not attacker_row.is_empty():
+		_animate_attacker(attacker_row["portrait"], String(attacker.get("side", "")) == "ally")
+	if target_row.is_empty():
+		return
+
+	var target_portrait: TextureRect = target_row["portrait"]
+	var target_max_hp := maxi(int(target.get("max_hp", 1)), 1)
+	var target_bar: ProgressBar = target_row["bar"]
+	target_bar.max_value = target_max_hp
+	target_bar.value = int(target.get("hp", 0))
+	var target_hp_label: Label = target_row["hp_label"]
+	target_hp_label.text = "%d/%d" % [int(target.get("hp", 0)), target_max_hp]
+	if bool(ev.get("killed", false)):
+		var death_tween := _replace_node_tween(target_portrait)
+		death_tween.tween_property(target_portrait, "modulate", Color(0.38, 0.42, 0.52, 0.25), 0.25)
+		death_tween.parallel().tween_property(target_portrait, "scale", Vector2(0.78, 0.78), 0.25)
+	else:
+		var hit_color := Color(1.0, 0.42, 0.45) if String(target.get("side", "")) == "enemy" else Color(1.0, 0.66, 0.54)
+		var origin := target_portrait.position
+		var hit_tween := _replace_node_tween(target_portrait)
+		hit_tween.tween_property(target_portrait, "position", origin + Vector2(6, 0), 0.04)
+		hit_tween.parallel().tween_property(target_portrait, "modulate", hit_color, 0.07)
+		hit_tween.tween_property(target_portrait, "position", origin - Vector2(5, 0), 0.05)
+		hit_tween.tween_property(target_portrait, "position", origin, 0.05)
+		hit_tween.parallel().tween_property(target_portrait, "modulate", Color.WHITE, 0.16)
+	_add_damage_popup(target_portrait, int(ev.get("damage", 0)), bool(ev.get("killed", false)))
+
+
+func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
+	var origin := portrait.position
+	var direction := -1.0 if is_ally else 1.0
+	var tween := _replace_node_tween(portrait)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(portrait, "position", origin + Vector2(0, 13.0 * direction), 0.09)
+	tween.parallel().tween_property(portrait, "scale", Vector2(1.1, 1.1), 0.09)
+	tween.tween_property(portrait, "position", origin, 0.13)
+	tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 0.13)
+
+
+func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool) -> void:
+	var popup := Label.new()
+	popup.text = "-%d%s" % [damage, "!" if killed else ""]
+	popup.add_theme_font_size_override("font_size", 30 if killed else 25)
+	popup.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3) if killed else Color(1.0, 0.96, 0.86))
+	popup.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.09, 0.96))
+	popup.add_theme_constant_override("outline_size", 5)
+	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.size = Vector2(120, 44)
+	var canvas_transform := fx_layer.get_global_transform_with_canvas()
+	var center: Vector2 = canvas_transform.affine_inverse() * portrait.get_global_rect().get_center()
+	popup.position = center - Vector2(popup.size.x * 0.5, popup.size.y)
+	fx_layer.add_child(popup)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(popup, "position:y", popup.position.y - 74.0, 0.48)
+	tween.tween_property(popup, "modulate:a", 0.0, 0.48)
+	tween.chain().tween_callback(popup.queue_free)
+
+
+func _pulse_wave() -> void:
+	var tween := _replace_node_tween(wave_label)
+	tween.tween_property(wave_label, "scale", Vector2(1.16, 1.16), 0.1)
+	tween.tween_property(wave_label, "scale", Vector2.ONE, 0.18)
+
+
+func _replace_node_tween(target: Control) -> Tween:
+	var instance_id := target.get_instance_id()
+	var previous: Variant = _node_tweens.get(instance_id)
+	if previous is Tween and previous.is_running():
+		previous.kill()
+	var tween := create_tween()
+	_node_tweens[instance_id] = tween
+	tween.finished.connect(_forget_node_tween.bind(instance_id, tween))
+	return tween
+
+
+func _stop_animations() -> void:
+	for value in _node_tweens.values():
+		if value is Tween and value.is_running():
+			value.kill()
+	_node_tweens.clear()
+
+
+func _forget_node_tween(instance_id: int, tween: Tween) -> void:
+	if _node_tweens.get(instance_id) == tween:
+		_node_tweens.erase(instance_id)

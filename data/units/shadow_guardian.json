@@ -7,6 +7,6 @@
   "base_attack": 12,
   "base_defense": 14,
   "base_speed": 5,
-  "art": "res://assets/placeholders/unit_shadow_guardian.svg",
+  "art": "res://assets/units/shadow_guardian.svg",
   "unlock": { "type": "gate_cleared", "gate": 4 }
 }

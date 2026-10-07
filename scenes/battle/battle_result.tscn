@@ -44,12 +44,73 @@ theme_override_font_sizes/font_size = 34
 text = "Resultado"
 horizontal_alignment = 1
 
+[node name="ResultPortrait" type="TextureRect" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 216)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 6
+
 [node name="RewardsLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="RewardStrip" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="GoldReward" type="HBoxContainer" parent="Margin/VBox/RewardStrip"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="GoldIcon" type="TextureRect" parent="Margin/VBox/RewardStrip/GoldReward"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="GoldAmount" type="Label" parent="Margin/VBox/RewardStrip/GoldReward"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.32, 1)
+theme_override_font_sizes/font_size = 16
+text = "+0"
+
+[node name="XpReward" type="HBoxContainer" parent="Margin/VBox/RewardStrip"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="XpIcon" type="TextureRect" parent="Margin/VBox/RewardStrip/XpReward"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="XpAmount" type="Label" parent="Margin/VBox/RewardStrip/XpReward"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.87, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "+0"
+
+[node name="EssenceReward" type="HBoxContainer" parent="Margin/VBox/RewardStrip"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="EssenceIcon" type="TextureRect" parent="Margin/VBox/RewardStrip/EssenceReward"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="EssenceAmount" type="Label" parent="Margin/VBox/RewardStrip/EssenceReward"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.42, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "+0"
 
 [node name="UnlockLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2

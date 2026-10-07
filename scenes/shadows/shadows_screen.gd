@@ -2,6 +2,8 @@ extends Control
 ## Tela Sombras (spec §5.7): unidades desbloqueadas, níveis, formação e
 ## melhoria usando gold + shadow essence (spec §4/Fase 4 — §10.6).
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+
 @onready var formation_label: Label = $Margin/VBox/FormationLabel
 @onready var unit_list: VBoxContainer = $Margin/VBox/Scroll/UnitList
 
@@ -36,56 +38,69 @@ func _refresh() -> void:
 
 
 func _make_row(unit_id: String, def: Dictionary) -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(0, 128)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Color(0.045, 0.05, 0.1, 0.94)
+	panel.border_color = Color(0.29, 0.25, 0.52, 0.75)
+	panel.set_border_width_all(1)
+	panel.set_corner_radius_all(12)
+	panel.content_margin_left = 10
+	panel.content_margin_top = 8
+	panel.content_margin_right = 10
+	panel.content_margin_bottom = 8
+	card.add_theme_stylebox_override("panel", panel)
+
+	var content := HBoxContainer.new()
+	content.name = "Content"
+	content.add_theme_constant_override("separation", 12)
+	card.add_child(content)
+
+	var portrait := TextureRect.new()
+	ArtHelper.configure_rect(portrait, ArtHelper.unit_texture(unit_id), Vector2(102, 102))
+	portrait.name = "Portrait"
+	content.add_child(portrait)
+
+	var details := VBoxContainer.new()
+	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details.add_theme_constant_override("separation", 4)
+	content.add_child(details)
+
+	var title := Label.new()
+	title.add_theme_font_size_override("font_size", 16)
+	title.text = String(def.get("display_name", unit_id))
+	details.add_child(title)
+
 	if not GameState.is_unlocked(unit_id):
-		var locked := Label.new()
-		locked.add_theme_font_size_override("font_size", 17)
-		locked.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+		portrait.modulate = Color(0.5, 0.52, 0.62, 0.75)
 		var unlock: Dictionary = def.get("unlock", {})
-		locked.text = "%s — %s (Portal %d)" % [
-			def["display_name"], Loc.t("ui.locked"), int(unlock.get("gate", 0)),
-		]
-		box.add_child(locked)
-		return box
+		var locked := Label.new()
+		locked.add_theme_font_size_override("font_size", 14)
+		locked.add_theme_color_override("font_color", Color(0.62, 0.66, 0.76))
+		locked.text = "%s — Portal %d" % [Loc.t("ui.locked"), int(unlock.get("gate", 0))]
+		details.add_child(locked)
+		return card
 
 	var info := GameState.shadow_upgrade_info(unit_id)
 	var in_team := GameState.formation.has(unit_id)
-
-	var title := Label.new()
-	title.add_theme_font_size_override("font_size", 17)
-	title.text = "%s — %s %d" % [def["display_name"], Loc.t("ui.level"), GameState.unit_level(unit_id)]
 	if in_team:
-		title.text += " · " + Loc.t("shadows.in_formation")
-	box.add_child(title)
+		title.text += " · %s" % Loc.t("shadows.in_formation")
 
 	# Atributos atuais e previstos (spec §4 linha 128).
 	var current: Dictionary = info["current_stats"]
 	var stats_line := Label.new()
-	stats_line.add_theme_font_size_override("font_size", 14)
-	stats_line.add_theme_color_override("font_color", Color(0.6, 0.6, 0.68, 1))
+	stats_line.add_theme_font_size_override("font_size", 13)
+	stats_line.add_theme_color_override("font_color", Color(0.66, 0.7, 0.8, 1))
 	stats_line.text = Loc.t("ui.stats") % [
 		int(current.get("hp", 0)), int(current.get("attack", 0)),
 		int(current.get("defense", 0)), int(current.get("speed", 0)),
 	]
-	box.add_child(stats_line)
-	if not bool(info["at_max"]):
-		var next_stats: Dictionary = info["next_stats"]
-		var next_line := Label.new()
-		next_line.add_theme_font_size_override("font_size", 14)
-		next_line.add_theme_color_override("font_color", Color(0.216, 0.878, 1, 1))
-		next_line.text = Loc.t("shadows.next") % [
-			int(info["next_level"]),
-			Loc.t("ui.stats") % [
-				int(next_stats.get("hp", 0)), int(next_stats.get("attack", 0)),
-				int(next_stats.get("defense", 0)), int(next_stats.get("speed", 0)),
-			],
-		]
-		box.add_child(next_line)
+	details.add_child(stats_line)
 
-	# Custo ou quantidade em falta (spec §4 linha 121 — bloquear e mostrar o faltante).
+	var next_stats: Dictionary = info.get("next_stats", {})
 	var cost_line := Label.new()
-	cost_line.add_theme_font_size_override("font_size", 14)
+	cost_line.add_theme_font_size_override("font_size", 13)
 	if bool(info["at_max"]):
 		cost_line.text = Loc.t("ui.max")
 		cost_line.add_theme_color_override("font_color", COLOR_MAX)
@@ -101,14 +116,15 @@ func _make_row(unit_id: String, def: Dictionary) -> Control:
 			int(info["missing_essence"]), Loc.t("ui.essence").to_lower(),
 		]
 		cost_line.add_theme_color_override("font_color", COLOR_MISSING)
-	box.add_child(cost_line)
+	details.add_child(cost_line)
 
 	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
+	buttons.add_theme_constant_override("separation", 8)
 
 	var upgrade_button := Button.new()
-	upgrade_button.custom_minimum_size = Vector2(180, 46)
-	upgrade_button.add_theme_font_size_override("font_size", 15)
+	upgrade_button.custom_minimum_size = Vector2(160, 42)
+	upgrade_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	upgrade_button.add_theme_font_size_override("font_size", 14)
 	upgrade_button.disabled = not bool(info["available"])
 	if bool(info["at_max"]):
 		upgrade_button.text = "%s — %s" % [Loc.t("ui.upgrade"), Loc.t("ui.max")]
@@ -118,8 +134,9 @@ func _make_row(unit_id: String, def: Dictionary) -> Control:
 	buttons.add_child(upgrade_button)
 
 	var toggle_button := Button.new()
-	toggle_button.custom_minimum_size = Vector2(160, 46)
-	toggle_button.add_theme_font_size_override("font_size", 15)
+	toggle_button.custom_minimum_size = Vector2(140, 42)
+	toggle_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	toggle_button.add_theme_font_size_override("font_size", 14)
 	if in_team:
 		toggle_button.text = Loc.t("shadows.remove")
 		toggle_button.pressed.connect(_on_remove.bind(unit_id))
@@ -128,8 +145,8 @@ func _make_row(unit_id: String, def: Dictionary) -> Control:
 		toggle_button.disabled = GameState.formation.size() >= GameState.MAX_TEAM_SIZE
 		toggle_button.pressed.connect(_on_add.bind(unit_id))
 	buttons.add_child(toggle_button)
-	box.add_child(buttons)
-	return box
+	details.add_child(buttons)
+	return card
 
 
 func _on_upgrade(unit_id: String) -> void:

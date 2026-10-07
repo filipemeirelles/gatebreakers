@@ -49,6 +49,23 @@ theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
 theme_override_font_sizes/font_size = 24
 text = "…"
 
+[node name="PreviewRow" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="EnemyPortrait" type="TextureRect" parent="Margin/VBox/PreviewRow"]
+custom_minimum_size = Vector2(112, 112)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="TeamPreview" type="HBoxContainer" parent="Margin/VBox/PreviewRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 6
+
 [node name="EnemiesLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17

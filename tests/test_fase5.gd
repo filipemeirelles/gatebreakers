@@ -102,6 +102,8 @@ static func _test_story_navigation(t: Node) -> void:
 	var story: Node = nav.get_node("Overlays/StoryCard")
 
 	t.check(story.visible, "cartão abre no arranque quando há pendência")
+	t.check(story.get_node("Margin/VBox/StoryImage").texture != null,
+		"cartão narrativo mostra sua ilustração SVG")
 	t.check(GameState.story_cards_seen.has("system_intro"),
 		"mostrar na navegação marca o cartão como visto")
 	t.check(GameState.pending_story_cards == ["first_advance"],

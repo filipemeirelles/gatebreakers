@@ -2,7 +2,11 @@ extends Control
 ## Preparação do portal (spec §5.3): inimigos/chefe, equipe e ordem da
 ## formação, recompensas de primeira vitória e botão para começar.
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+
 @onready var gate_label: Label = $Margin/VBox/GateLabel
+@onready var enemy_portrait: TextureRect = $Margin/VBox/PreviewRow/EnemyPortrait
+@onready var team_preview: HBoxContainer = $Margin/VBox/PreviewRow/TeamPreview
 @onready var enemies_label: Label = $Margin/VBox/EnemiesLabel
 @onready var boss_label: Label = $Margin/VBox/BossLabel
 @onready var order_label: Label = $Margin/VBox/OrderLabel
@@ -38,6 +42,10 @@ func _refresh() -> void:
 	if gate_def.is_empty():
 		return
 	gate_label.text = "%s %d" % [Loc.t("ui.gate"), _gate]
+	var has_boss := bool(gate_def.get("has_boss", false))
+	ArtHelper.configure_rect(enemy_portrait, ArtHelper.enemy_texture(has_boss), Vector2(112, 112))
+	enemy_portrait.tooltip_text = Loc.t("prep.boss") if has_boss else Loc.t("battle.enemies")
+	_rebuild_team_preview()
 	enemies_label.text = Loc.t("prep.enemies") % [
 		int(gate_def["total_enemies"]), (gate_def["waves"] as Array).size(),
 	]
@@ -64,6 +72,18 @@ func _refresh() -> void:
 		unlock_label.visible = true
 	else:
 		unlock_label.visible = false
+
+
+func _rebuild_team_preview() -> void:
+	for child in team_preview.get_children():
+		team_preview.remove_child(child)
+		child.queue_free()
+	for unit_id in GameState.formation:
+		var definition := ContentDB.unit(String(unit_id))
+		var portrait := TextureRect.new()
+		ArtHelper.configure_rect(portrait, ArtHelper.unit_texture(String(unit_id)), Vector2(74, 74))
+		portrait.tooltip_text = String(definition.get("display_name", unit_id))
+		team_preview.add_child(portrait)
 
 
 func _on_back() -> void:

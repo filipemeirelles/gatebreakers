@@ -54,6 +54,8 @@
   "settings.reset_no": "Cancelar",
   "settings.reset_done": "Progresso reiniciado. Bem-vindo de volta ao Sistema.",
   "battle.title": "Combate",
+  "battle.confrontation": "CONFRONTO",
+  "battle.ready": "Prepare-se!",
   "battle.wave": "Onda",
   "battle.pause": "Pausar",
   "battle.resume": "Retomar",

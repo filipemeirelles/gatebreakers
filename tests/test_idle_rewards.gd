@@ -115,8 +115,13 @@ static func _test_report_screen(t: Node) -> void:
 	var afk = main.get_node("Overlays/AfkReport")
 	t.check(afk.visible, "relatório AFK abre no arranque quando há recompensa")
 	t.check(afk.time_label.text.contains("2h"), "relatório mostra o tempo contado")
-	t.check(afk.rewards_label.text == "%s +20 %s · +10 %s" % [Loc.t("afk.gained"), Loc.t("ui.gold"), Loc.t("ui.xp")],
-		"relatório mostra as quantidades")
+	t.check(afk.rewards_label.text == Loc.t("afk.gained")
+		and afk.gold_amount.text == "+20 %s" % Loc.t("ui.gold")
+		and afk.xp_amount.text == "+10 %s" % Loc.t("ui.xp"),
+		"relatório mostra quantidades junto aos ícones de recurso")
+	t.check(afk.get_node("Margin/VBox/RewardsStrip/GoldReward/GoldIcon").texture != null
+		and afk.get_node("Margin/VBox/RewardsStrip/XpReward/XpIcon").texture != null,
+		"relatório carrega ícones de ouro e XP")
 	t.check(afk.rate_label.text == (Loc.t("afk.rate") % [1, 10, Loc.t("ui.gold"), 5, Loc.t("ui.xp")]),
 		"relatório mostra portal e taxa")
 	t.check(GameState.pending_afk_report.is_empty(), "relatório pendente é consumido ao abrir")

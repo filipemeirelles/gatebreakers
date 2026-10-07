@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/battle/battle.tscn" id="8_battle"]
 [ext_resource type="PackedScene" path="res://scenes/battle/battle_result.tscn" id="9_result"]
 [ext_resource type="PackedScene" path="res://scenes/ui/story_card.tscn" id="10_story"]
+[ext_resource type="Theme" path="res://assets/ui/gatebreakers_theme.tres" id="11_theme"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -19,6 +20,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_nav")
+theme = ExtResource("11_theme")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
