@@ -5,6 +5,7 @@ extends RefCounted
 
 static func run(t: Node) -> void:
 	print("-- Navegação --")
+	var original := GameState.to_dict()
 	var main: Node = load("res://scenes/app/main.tscn").instantiate()
 	t.add_child(main)
 
@@ -18,6 +19,27 @@ static func run(t: Node) -> void:
 	t.check(shadow_portrait.texture != null, "tela de Sombras mostra retrato da unidade")
 	var portal_icon: TextureRect = screens.get_node("Portals/Margin/VBox/StatsRow/GoldStat/GoldIcon")
 	t.check(portal_icon.texture != null, "mapa de portais mostra ícone de recurso")
+	t.check(screens.get_node("Portals/Margin/VBox/AfkChestPanel/AfkChestRow/ChestIcon").texture != null,
+		"baú AFK mostra ilustração do Sistema")
+	var hunter_badge: Label = main.get_node("BottomBar/HunterButton/RedDot")
+	GameState.hunter_xp = 100
+	GameState.gold = 100
+	GameState.state_changed.emit()
+	t.check(hunter_badge.visible, "red dot central sinaliza melhoria do Caçador pronta")
+	GameState.hunter_xp = 0
+	GameState.gold = 100
+	GameState.afk_chests_available = 1
+	GameState.state_changed.emit()
+	t.check(main.get_node("BottomBar/PortalsButton/RedDot").visible,
+		"red dot central sinaliza baú AFK pronto")
+	GameState.afk_chests_available = 0
+	GameState.gold = 25
+	GameState.shadow_essence = 5
+	GameState.state_changed.emit()
+	t.check(main.get_node("BottomBar/ShadowsButton/RedDot").visible,
+		"red dot central sinaliza melhoria de sombra comprável")
+	GameState.shadow_essence = 0
+	GameState.state_changed.emit()
 
 	t.check(screens.get_child_count() == 4, "4 telas filhas criadas")
 	t.check(overlays.get_child_count() == 5, "5 overlays criados")
@@ -47,9 +69,37 @@ static func run(t: Node) -> void:
 	nav.close_overlay("gate_prep")
 	t.check(not overlays.get_node("GatePrep").visible, "overlay gate_prep fecha")
 
+	# Guardrail de poder: pedir confirmação antes de entrar num portal perigoso.
+	GameState.from_dict({
+		"schema_version": 1,
+		"hunter_level": 1,
+		"hunter_xp": 0,
+		"gold": 100,
+		"shadow_essence": 0,
+		"highest_gate_cleared": 9,
+		"last_background_unix": 0,
+		"roster": {
+			"jinwoo": { "level": 1, "unlocked": true },
+			"shadow_soldier": { "level": 1, "unlocked": true },
+		},
+		"formation": ["jinwoo", "shadow_soldier"],
+	})
+	nav.show_overlay("gate_prep")
+	var prep = overlays.get_node("GatePrep")
+	t.check(prep.power_warning.visible, "portal perigoso mostra aviso de poder")
+	prep._on_start()
+	t.check(not overlays.get_node("Battle").visible and prep._risk_confirmation_pending,
+		"primeiro toque pede confirmação explícita do risco")
+	prep._on_start()
+	t.check(overlays.get_node("Battle").visible, "segundo toque confirma e inicia o combate")
+	overlays.get_node("Battle")._on_exit()
+	nav.close_overlay("gate_prep")
+
 	nav.show_overlay("battle")
 	t.check(overlays.get_node("Battle").visible, "overlay battle abre")
 	nav.close_all_overlays()
 	t.check(not overlays.get_node("Battle").visible, "close_all_overlays fecha tudo")
 
 	main.free()
+	GameState.from_dict(original)
+	GameState.save_now()

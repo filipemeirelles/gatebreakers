@@ -219,4 +219,5 @@ static func _unit_summary(unit: Dictionary) -> Dictionary:
 		"side": str(unit.get("side", "")),
 		"hp": int(unit.get("hp", 0)),
 		"max_hp": int(unit.get("max_hp", unit.get("hp", 0))),
+		"role": str(unit.get("role", "")),
 	}

@@ -1,26 +1,27 @@
-# Gatebreakers — validação visual v0.2
+# Gatebreakers — validação do ciclo PML v0.3
 
 **Data:** 06/10/2026
 
-**Build instalado:** `0.2.0` (Android versionCode 2), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+**Build exportado:** `0.3.0` (Android versionCode 3), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
 
 **Dispositivo:** `RXCT301TRHY`, Android 16 / API 36, 1080×2340, orientação retrato
 
 ## Verificações concluídas
 
-- Suíte Godot headless: **238 passaram, 0 falharam**, exit 0.
+- Suíte Godot headless: **281 passaram, 0 falharam**, exit 0.
+- Cobertura nova: reprodução do time salvo no Portal 7, invariantes vivo/morto, distinção #1/#2 e alvo automático, farm com vitória/derrota/pausa, migração de save v1→v2, baús AFK, guardrail de poder, recompensa ordenada e red dots.
 - Smoke headless (`--quit-after 120`): exit 0.
-- Export Android: exit 0; `adb install -r` atualizou o APK sem limpar o save; o jogo abriu no aparelho.
-- Versão conferida no pacote: `versionName=0.2.0`, `versionCode=2`.
-- Teste visual manual informado por Filipe: as imagens foram exibidas e a verificação correu bem.
-- A atualização por ondas reconstrói os retratos dos inimigos ao passar para a onda seguinte; o teste de tela cobre essa transição.
-- O jogo foi aberto em modo avião na validação anterior; nesta sessão o modo avião permaneceu desativado.
+- Export Android: exit 0. `aapt` conferiu `com.gatebreakers.prototype`, `versionName=0.3.0`, `versionCode=3`.
+- **Sem instalação/teste no celular nesta sessão**, conforme pedido de Filipe; o save do aparelho não foi acessado nem alterado.
 
-## Validação manual ainda pendente
+## Teste manual reservado para amanhã
 
-- Medir desempenho durante combate ativo para confirmar a meta de 30 FPS.
-- Testar o reset pela interface; o save atual foi preservado intencionalmente.
-- Conferir proporção 9:16; o aparelho usado é 1080×2340 (aprox. 20:9).
-- Áudio/vibração continuam adiados; os SVGs atuais são arte vetorial de protótipo.
+- Exportar/instalar o APK v0.3 com `adb install -r` e conferir versão/save preservado.
+- Reproduzir batalha do Portal 7 com equipe atual; observar HP do último inimigo, alvo #1/#2 e morte em HP zero.
+- Testar auto-farm: vitória avança e paga; derrota interrompe; segundo plano interrompe; batalha manual continua disponível.
+- Deixar o Baú do Sistema acumular, resgatar marco, verificar red dot e persistência após reabrir.
+- Verificar confirmação de risco alto, red dots de melhorias e layout/áreas seguras.
+- Medir FPS em batalha ativa para a meta de 30 FPS; o reset fica fora do teste para preservar o save.
+- Áudio/vibração continuam adiados; a arte atual ainda é SVG de protótipo.
 
-O APK `0.2.0` está instalado e aberto no aparelho, pronto para continuar o playtest. A camada visual usa os SVGs originais já existentes no projeto; o serviço de combate determinístico não foi alterado.
+O build v0.3 está em `build/gatebreakers-debug.apk`, pronto para instalar amanhã quando Filipe reconectar o telefone.

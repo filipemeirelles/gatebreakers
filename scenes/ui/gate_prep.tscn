@@ -78,6 +78,14 @@ theme_override_font_sizes/font_size = 17
 text = "Chefe"
 visible = false
 
+[node name="PowerWarning" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.58, 0.32, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+autowrap_mode = 3
+visible = false
+
 [node name="OrderLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17

@@ -60,10 +60,10 @@ func configure(data: Dictionary) -> void:
 		reward_strip.visible = true
 		var parts: Array = [
 			"+%d %s" % [int(rewards.get("gold", 0)), Loc.t("ui.gold")],
-			"+%d %s" % [int(rewards.get("xp", 0)), Loc.t("ui.xp")],
 		]
 		if int(rewards.get("essence", 0)) > 0:
 			parts.append("+%d %s" % [int(rewards["essence"]), Loc.t("ui.essence")])
+		parts.append("+%d %s" % [int(rewards.get("xp", 0)), Loc.t("ui.xp")])
 		rewards_label.text = " · ".join(parts)
 	else:
 		rewards_label.text = Loc.t("result.no_reward")

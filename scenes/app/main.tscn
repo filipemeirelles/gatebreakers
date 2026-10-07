@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/navigation_controller.gd" id="1_nav"]
 [ext_resource type="PackedScene" path="res://scenes/ui/portal_map.tscn" id="2_portals"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/battle/battle_result.tscn" id="9_result"]
 [ext_resource type="PackedScene" path="res://scenes/ui/story_card.tscn" id="10_story"]
 [ext_resource type="Theme" path="res://assets/ui/gatebreakers_theme.tres" id="11_theme"]
+[ext_resource type="Script" path="res://scripts/systems/auto_farm_controller.gd" id="12_auto_farm"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -21,6 +22,9 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_nav")
 theme = ExtResource("11_theme")
+
+[node name="AutoFarmController" type="Node" parent="."]
+script = ExtResource("12_auto_farm")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

@@ -1,6 +1,22 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/portal_map.gd" id="1_portal"]
+
+[sub_resource type="StyleBoxFlat" id="AutoFarmPanelStyle"]
+bg_color = Color(0.05, 0.07, 0.13, 0.96)
+border_color = Color(0.35, 0.3, 0.66, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
 
 [node name="PortalMap" type="Control"]
 layout_mode = 3
@@ -107,10 +123,75 @@ theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
 theme_override_font_sizes/font_size = 17
 text = "…"
 
+[node name="AfkChestPanel" type="PanelContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("AutoFarmPanelStyle")
+
+[node name="AfkChestRow" type="HBoxContainer" parent="Margin/VBox/AfkChestPanel"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="ChestIcon" type="TextureRect" parent="Margin/VBox/AfkChestPanel/AfkChestRow"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="ChestInfo" type="VBoxContainer" parent="Margin/VBox/AfkChestPanel/AfkChestRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="ChestTitle" type="Label" parent="Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.79, 0.62, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Baú do Sistema"
+
+[node name="ChestProgress" type="ProgressBar" parent="Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+show_percentage = false
+
+[node name="ChestProgressLabel" type="Label" parent="Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.7, 0.82, 1)
+theme_override_font_sizes/font_size = 12
+text = ""
+
+[node name="ChestClaimButton" type="Button" parent="Margin/VBox/AfkChestPanel/AfkChestRow"]
+custom_minimum_size = Vector2(112, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Resgatar"
+
 [node name="GateLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
 theme_override_font_sizes/font_size = 24
+text = "…"
+
+[node name="AutoFarmPanel" type="PanelContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("AutoFarmPanelStyle")
+
+[node name="AutoFarmRow" type="HBoxContainer" parent="Margin/VBox/AutoFarmPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AutoFarmStatus" type="Label" parent="Margin/VBox/AutoFarmPanel/AutoFarmRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.79, 0.94, 1)
+theme_override_font_sizes/font_size = 14
+text = "…"
+autowrap_mode = 3
+
+[node name="AutoFarmButton" type="Button" parent="Margin/VBox/AutoFarmPanel/AutoFarmRow"]
+custom_minimum_size = Vector2(150, 48)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 14
 text = "…"
 
 [node name="SweepFeedbackLabel" type="Label" parent="Margin/VBox"]

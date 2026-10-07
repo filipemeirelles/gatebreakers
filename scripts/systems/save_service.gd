@@ -10,7 +10,7 @@ extends RefCounted
 const SAVE_PATH := "user://save_v1.json"
 const TMP_PATH := "user://save_v1.json.tmp"
 const CORRUPT_BACKUP_PATH := "user://save_v1.corrupt.json"
-const SCHEMA_VERSION: int = 1
+const SCHEMA_VERSION: int = 2
 
 ## Resultado do último load: { status, state, backup_path }
 static var last_result: Dictionary = {}
@@ -19,6 +19,9 @@ static var last_result: Dictionary = {}
 static func save_state(state: Dictionary) -> bool:
 	var payload := state.duplicate(true)
 	payload["schema_version"] = SCHEMA_VERSION
+	payload["afk_chest_progress_seconds"] = int(payload.get("afk_chest_progress_seconds", 0))
+	payload["afk_chests_available"] = int(payload.get("afk_chests_available", 0))
+	payload["afk_chest_last_tick_unix"] = int(payload.get("afk_chest_last_tick_unix", payload.get("last_background_unix", 0)))
 	var text := JSON.stringify(payload)
 	if JSON.parse_string(text) == null:
 		push_error("SaveService: serialização inválida, save não gravado.")
@@ -85,6 +88,9 @@ static func _fresh_state() -> Dictionary:
 		"shadow_essence": BalanceConfig.starting_shadow_essence(),
 		"highest_gate_cleared": BalanceConfig.starting_highest_gate_cleared(),
 		"last_background_unix": 0,
+		"afk_chest_progress_seconds": 0,
+		"afk_chests_available": 0,
+		"afk_chest_last_tick_unix": 0,
 		"roster": roster,
 		"formation": ["jinwoo", "shadow_soldier"],
 		"story_cards_seen": [],
@@ -105,7 +111,8 @@ static func validate_state(data: Variant) -> Dictionary:
 	if not (data is Dictionary):
 		return {}
 	var d: Dictionary = data
-	if int(d.get("schema_version", -1)) != SCHEMA_VERSION:
+	var source_schema := int(d.get("schema_version", -1))
+	if source_schema < 1 or source_schema > SCHEMA_VERSION:
 		return {}
 	for key in ["hunter_xp", "gold", "shadow_essence", "highest_gate_cleared", "last_background_unix"]:
 		var ok: bool = false
@@ -115,6 +122,19 @@ static func validate_state(data: Variant) -> Dictionary:
 			_:
 				ok = false
 		if not ok:
+			return {}
+	var chest_progress := 0
+	var chests_available := 0
+	var chest_last_tick := int(d["last_background_unix"])
+	if source_schema >= 2:
+		for key in ["afk_chest_progress_seconds", "afk_chests_available", "afk_chest_last_tick_unix"]:
+			var value: Variant = d.get(key)
+			if not (value is int or (value is float and float(value) == floor(float(value)))) or float(value) < 0.0:
+				return {}
+		chest_progress = int(d["afk_chest_progress_seconds"])
+		chests_available = int(d["afk_chests_available"])
+		chest_last_tick = int(d["afk_chest_last_tick_unix"])
+		if chest_progress >= BalanceConfig.afk_chest_milestone_seconds() or chests_available > 1000:
 			return {}
 	# hunter_level: presente em saves novos; ausente em saves v1 (migração —
 	# o nível era derivado do XP total e o XP não era gasto).
@@ -179,6 +199,9 @@ static func validate_state(data: Variant) -> Dictionary:
 		"shadow_essence": int(d["shadow_essence"]),
 		"highest_gate_cleared": int(d["highest_gate_cleared"]),
 		"last_background_unix": int(d["last_background_unix"]),
+		"afk_chest_progress_seconds": chest_progress,
+		"afk_chests_available": chests_available,
+		"afk_chest_last_tick_unix": chest_last_tick,
 		"roster": roster,
 		"formation": formation,
 		"story_cards_seen": story_seen,

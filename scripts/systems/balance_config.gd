@@ -22,6 +22,10 @@ static func _afk() -> Dictionary:
 	return config()["afk"]
 
 
+static func _afk_chests() -> Dictionary:
+	return config()["afk_chests"]
+
+
 static func _leveling() -> Dictionary:
 	return config()["leveling"]
 
@@ -50,6 +54,18 @@ static func _starting() -> Dictionary:
 
 static func afk_cap_seconds() -> int:
 	return int(_afk()["cap_seconds"])
+
+
+static func afk_chest_milestone_seconds() -> int:
+	return int(_afk_chests()["milestone_seconds"])
+
+
+static func afk_chest_gold_per_gate() -> int:
+	return int(_afk_chests()["gold_per_gate"])
+
+
+static func afk_chest_xp_per_gate() -> int:
+	return int(_afk_chests()["xp_per_gate"])
 
 
 static func afk_gold_per_hour(gate: int) -> int:
@@ -150,6 +166,20 @@ static func enemies_per_normal_wave() -> int:
 
 static func basic_damage(attack: int, defense: int) -> int:
 	return maxi(min_damage(), attack - int(floor(float(defense) / float(defense_divisor()))))
+
+
+static func combat_power(stats: Dictionary) -> int:
+	var cfg := _combat()
+	return int(floor(
+		float(stats.get("hp", 0)) / float(cfg["power_hp_divisor"])
+		+ float(stats.get("attack", 0)) * float(cfg["power_attack_weight"])
+		+ float(stats.get("defense", 0)) * float(cfg["power_defense_weight"])
+		+ float(stats.get("speed", 0)) * float(cfg["power_speed_weight"])
+	))
+
+
+static func danger_enemy_power_ratio() -> float:
+	return float(_combat()["danger_enemy_power_ratio"])
 
 
 # --- Recompensas ---

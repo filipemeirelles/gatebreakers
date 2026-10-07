@@ -17,6 +17,7 @@ static func run(t: Node) -> void:
 	_test_double_credit(t)
 	_test_first_start(t)
 	_test_no_essence(t)
+	_test_chest_milestones(t)
 	_test_report_screen(t)
 
 	# Repor o estado do jogador
@@ -100,6 +101,52 @@ static func _test_no_essence(t: Node) -> void:
 	t.check(GameState.shadow_essence == 10, "essência nunca é concedida AFK (§4)")
 	var persisted := SaveService.load_state()
 	t.check(int(persisted["state"]["gold"]) == GameState.gold, "crédito AFK grava o save de imediato")
+
+
+static func _test_chest_milestones(t: Node) -> void:
+	GameState.reset_to_new_game()
+	GameState.highest_gate_cleared = 1
+	GameState.last_background_unix = 1_700_000_000
+	GameState.afk_chest_last_tick_unix = 1_700_000_000
+	var first := GameState.apply_afk_rewards(1_700_000_000 + 7199)
+	t.check(int(first["elapsed"]) == 7199 and GameState.afk_chests_available == 0,
+		"progresso AFK ainda não entrega baú antes do marco de 2 h")
+	t.check(GameState.afk_chest_progress_seconds == 7199,
+		"progresso residual do baú fica guardado em segundos")
+	var live_status := GameState.afk_chest_status(1_700_000_000 + 7199)
+	t.check(int(live_status["progress_seconds"]) == 7199 and int(live_status["available"]) == 0,
+		"prévia visual do baú acompanha o tempo atual sem creditar duas vezes")
+	var gold_before := GameState.gold
+	var second := GameState.apply_afk_rewards(1_700_000_000 + 7200)
+	t.check(second.is_empty() and GameState.afk_chests_available == 1,
+		"ao completar 2 h surge um baú sem duplicar o relatório AFK")
+	var status := GameState.afk_chest_status(1_700_000_000 + 7200)
+	t.check(int(status["available"]) == 1 and int(status["progress_seconds"]) == 0,
+		"preview do baú mostra resgate pronto e barra reiniciada")
+	var persisted := SaveService.load_state()
+	t.check(int(persisted["state"]["afk_chests_available"]) == 1,
+		"baú pronto persiste após fechar e reabrir o jogo")
+	var reward := GameState.claim_afk_chests(1_700_000_000 + 7200)
+	t.check(int(reward.get("count", 0)) == 1 and GameState.afk_chests_available == 0,
+		"resgata o baú-marco acumulado uma única vez")
+	t.check(GameState.gold == gold_before + BalanceConfig.afk_chest_gold_per_gate()
+		and GameState.hunter_xp >= BalanceConfig.afk_chest_xp_per_gate(),
+		"baú concede bônus próprio de ouro e XP")
+	t.check(GameState.afk_chest_progress_seconds == 0,
+		"resgate não altera o progresso residual fora do marco")
+	var chest_save := SaveService.load_state()
+	t.check(int(chest_save["state"]["afk_chests_available"]) == 0
+		and int(chest_save["state"]["gold"]) == GameState.gold,
+		"resgate grava recursos e contador do baú uma única vez")
+
+	GameState.reset_to_new_game()
+	GameState.highest_gate_cleared = 1
+	GameState.last_background_unix = 1_700_100_000
+	GameState.afk_chest_last_tick_unix = 1_700_100_000
+	var capped := GameState.apply_afk_rewards(1_700_100_000 + 9 * 3600)
+	t.check(int(capped["elapsed"]) == BalanceConfig.afk_cap_seconds()
+		and GameState.afk_chests_available == 4,
+		"marcos AFK também respeitam o teto de 8 h")
 
 
 # --- Relatório visual (§5.2, §10.9) ---

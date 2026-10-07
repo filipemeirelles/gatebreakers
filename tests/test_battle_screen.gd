@@ -28,6 +28,13 @@ static func run(t: Node) -> void:
 	var enemy_row: Dictionary = battle._rows["enemy:%s" % first_enemy_id]
 	t.check(enemy_row["portrait"] is TextureRect and enemy_row["portrait"].texture != null,
 		"inimigo recebe retrato SVG da batalha")
+	var second_enemy_id := String(battle._state["enemies"][1]["id"])
+	var second_enemy_row: Dictionary = battle._rows["enemy:%s" % second_enemy_id]
+	t.check(String(enemy_row["name_label"].text).ends_with("#1")
+		and String(second_enemy_row["name_label"].text).ends_with("#2"),
+		"inimigos visualmente iguais são identificados individualmente")
+	t.check(enemy_row["target_badge"].visible and not second_enemy_row["target_badge"].visible,
+		"alvo automático atual fica destacado")
 	var first_ally_id := String(battle._state["allies"][0]["id"])
 	var ally_row: Dictionary = battle._rows["ally:%s" % first_ally_id]
 	t.check(ally_row["portrait"] is TextureRect and ally_row["portrait"].texture != null,
@@ -35,6 +42,17 @@ static func run(t: Node) -> void:
 	battle._advance()
 	t.check(not battle.log_label.text.is_empty(), "primeiro golpe atualiza feedback da batalha")
 	t.check(battle.fx_layer.get_child_count() == 1, "golpe cria número de dano flutuante")
+	var first_enemy_steps := 0
+	while int(battle._state["enemies"][0]["hp"]) > 0 and first_enemy_steps < 100:
+		battle._advance()
+		first_enemy_steps += 1
+	t.check(int(battle._state["enemies"][0]["hp"]) == 0
+		and not enemy_row["target_badge"].visible
+		and second_enemy_row["target_badge"].visible,
+		"alvo morto sai e o próximo vivo recebe destaque")
+	t.check(float(second_enemy_row["portrait"].modulate.a) > 0.9
+		and int(battle._state["enemies"][1]["hp"]) > 0,
+		"inimigo vivo permanece visualmente vivo durante a luta")
 	var wave_steps := 0
 	while int(battle._state["wave_index"]) == 0 and wave_steps < 100:
 		battle._advance()
@@ -64,6 +82,14 @@ static func run(t: Node) -> void:
 	t.check(GameState.highest_gate_cleared == 1, "vitória desbloqueia o portal seguinte")
 	t.check(result.unlock_label.visible and result.unlock_label.text == (Loc.t("result.gate_unlocked") % 2),
 		"resultado anuncia o portal 2 desbloqueado")
+	result.configure({
+		"victory": true,
+		"gate": 5,
+		"rewards": { "gold": 10, "essence": 50, "xp": 5 },
+		"advanced": false,
+	})
+	t.check(result.rewards_label.text == "+10 Ouro · +50 Essência · +5 XP",
+		"relatório de chefe ordena ouro, essência e XP")
 	t.check(not result.retry_button.visible, "vitória não oferece tentar novamente")
 
 	result._on_continue()
@@ -105,6 +131,31 @@ static func run(t: Node) -> void:
 	t.check(battle._speed == 2 and battle.speed_button.text == "x2", "x2 altera a velocidade de apresentação")
 	battle._on_speed()
 	t.check(battle._speed == 1 and battle.speed_button.text == "x1", "volta a x1")
+	battle._on_exit()
+
+	# Regressão: um alvo vivo com 12 HP não pode manter visual de morte, mesmo
+	# que uma tween anterior tenha sido interrompida no meio.
+	battle._state = CombatService.start_battle(
+		[{ "id": "tester", "display_name": "Teste", "hp": 30, "attack": 2, "defense": 0, "speed": 10 }],
+		{ "gate": 1, "waves": [[
+			{ "id": "low_hp_enemy", "display_name": "Alvo ferido", "role": "common", "hp": 13, "attack": 2, "defense": 100, "speed": 5 },
+		]] },
+	)
+	battle._finished = false
+	battle._paused = false
+	battle._displayed_wave_index = -1
+	battle._build_rows()
+	battle._render()
+	var low_hp_row: Dictionary = battle._rows["enemy:low_hp_enemy"]
+	low_hp_row["portrait"].scale = Vector2(0.78, 0.78)
+	low_hp_row["portrait"].modulate = Color(0.38, 0.42, 0.52, 0.25)
+	battle._advance()
+	t.check(int(battle._state["enemies"][0]["hp"]) == 12
+		and low_hp_row["hp_label"].text == "12/13",
+		"alvo com 12 HP mantém HP sincronizado após o golpe")
+	t.check(low_hp_row["portrait"].scale == Vector2.ONE
+		and float(low_hp_row["portrait"].modulate.a) > 0.9,
+		"alvo vivo recupera aparência viva após tween interrompida")
 	battle._on_exit()
 
 	main.free()

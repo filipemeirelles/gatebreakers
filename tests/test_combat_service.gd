@@ -16,6 +16,8 @@ static func run(t: Node) -> void:
 	_test_targeting(t)
 	_test_damage(t)
 	_test_determinism(t)
+	_test_gate_seven_live_invariants(t)
+	_test_power_guard(t)
 	_test_hp_between_waves(t)
 	_test_victory_rewards(t)
 	_test_progression(t)
@@ -133,6 +135,92 @@ static func _test_determinism(t: Node) -> void:
 	var b := _event_log(CombatService.start_battle(_team(), ContentDB.gate(1)))
 	t.check(a.size() > 0, "simulação completa do portal 1 gera eventos")
 	t.check(a == b, "mesma entrada e estado inicial → mesma sequência de eventos")
+
+
+## Regressão do relato no Portal 7: unidade viva com pouca vida pode atacar;
+## unidade morta nunca volta a ser ator ou alvo, e HP segue dano/evento.
+static func _test_gate_seven_live_invariants(t: Node) -> void:
+	var original := GameState.to_dict()
+	GameState.from_dict({
+		"schema_version": 1,
+		"hunter_level": 15,
+		"hunter_xp": 592,
+		"gold": 19413,
+		"shadow_essence": 0,
+		"highest_gate_cleared": 6,
+		"last_background_unix": 0,
+		"roster": {
+			"jinwoo": { "level": 1, "unlocked": true },
+			"shadow_soldier": { "level": 3, "unlocked": true },
+			"shadow_ranged": { "level": 3, "unlocked": true },
+			"shadow_guardian": { "level": 2, "unlocked": true },
+			"igris": { "level": 3, "unlocked": true },
+		},
+		"formation": ["jinwoo", "shadow_ranged", "shadow_guardian", "igris"],
+	})
+	var state := CombatService.start_battle(GameState.team_units(), ContentDB.gate(7))
+	var previous_hp: Dictionary = {}
+	var dead_ids: Dictionary = {}
+	var invariants_hold := true
+	var attacked_dead_unit := false
+	var steps := 0
+	for side in ["allies", "enemies"]:
+		for unit in state[side]:
+			previous_hp[String(unit["id"])] = int(unit["hp"])
+
+	while not CombatService.is_finished(state) and steps < 2000:
+		steps += 1
+		for unit in state["enemies"]:
+			var enemy_id := String(unit["id"])
+			if not previous_hp.has(enemy_id):
+				previous_hp[enemy_id] = int(unit["hp"])
+		var ev: Dictionary = CombatService.step(state)
+		if ev.is_empty() or String(ev.get("type", "")) != "attack":
+			continue
+		var attacker: Dictionary = ev["attacker"]
+		var target: Dictionary = ev["target"]
+		var attacker_id := String(attacker["id"])
+		var target_id := String(target["id"])
+		if dead_ids.has(attacker_id) or int(attacker["hp"]) <= 0:
+			attacked_dead_unit = true
+		var hp_before := int(previous_hp.get(target_id, int(target["max_hp"])))
+		var expected_hp := maxi(hp_before - int(ev["damage"]), 0)
+		if dead_ids.has(target_id) or hp_before <= 0:
+			attacked_dead_unit = true
+		if int(target["hp"]) != expected_hp or bool(ev["killed"]) != (expected_hp == 0):
+			invariants_hold = false
+		previous_hp[target_id] = int(target["hp"])
+		if bool(ev["killed"]):
+			dead_ids[target_id] = true
+
+	t.check(steps < 2000 and CombatService.is_finished(state),
+		"Portal 7 reproduzível termina sem travar")
+	t.check(invariants_hold, "HP do alvo, dano e evento de morte ficam sincronizados")
+	t.check(not attacked_dead_unit, "unidade morta nunca ataca nem volta a ser alvo")
+
+	# Uma unidade viva com 12 HP ainda pode retaliar: o renderer deve distingui-la
+	# de um morto pelo estado, não por uma barra quase vazia.
+	var low_hp_state := CombatService.start_battle(
+		[_unit("tester", 30, 2, 0, 10)],
+		{ "gate": 1, "waves": [[_unit("low_hp_enemy", 13, 2, 100, 5)]] },
+	)
+	var injured := CombatService.step(low_hp_state)
+	t.check(int(injured["target"]["hp"]) == 12 and not bool(injured["killed"]),
+		"inimigo com 12 HP continua vivo, sem evento de morte")
+	var retaliation := CombatService.step(low_hp_state)
+	t.check(String(retaliation["attacker"]["id"]) == "low_hp_enemy",
+		"inimigo vivo com 12 HP pode retaliar antes do próximo ciclo")
+	GameState.from_dict(original)
+
+
+static func _test_power_guard(t: Node) -> void:
+	var original := GameState.to_dict()
+	GameState.reset_to_new_game()
+	t.check(not GameState.gate_is_high_risk(1),
+		"aviso de poder não bloqueia o portal inicial equilibrado")
+	t.check(GameState.gate_is_high_risk(10),
+		"estimativa de poder alerta contra o portal final com equipe inicial")
+	GameState.from_dict(original)
 
 
 # --- HP entre ondas (spec §4) ---

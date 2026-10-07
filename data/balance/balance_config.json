@@ -3,6 +3,11 @@
   "afk": {
     "cap_seconds": 28800
   },
+  "afk_chests": {
+    "milestone_seconds": 7200,
+    "gold_per_gate": 25,
+    "xp_per_gate": 10
+  },
   "leveling": {
     "max_level": 20,
     "hunter_xp_base_per_level": 100,
@@ -17,7 +22,12 @@
     "min_damage": 1,
     "defense_divisor": 2,
     "waves_per_gate": 3,
-    "enemies_per_normal_wave": 2
+    "enemies_per_normal_wave": 2,
+    "power_hp_divisor": 10.0,
+    "power_attack_weight": 2,
+    "power_defense_weight": 1,
+    "power_speed_weight": 1,
+    "danger_enemy_power_ratio": 0.8
   },
   "enemy_scaling": {
     "base_hp": 60,

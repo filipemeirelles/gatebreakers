@@ -10,6 +10,8 @@ const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 const STEP_SECONDS := 0.45
 const CARD_MIN_WIDTH := 148.0
 const PORTRAIT_SIZE := 126.0
+const DEAD_MODULATE := Color(0.46, 0.49, 0.58, 0.52)
+const DEAD_SCALE := Vector2(0.78, 0.78)
 
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var wave_label: Label = $Margin/VBox/WaveLabel
@@ -135,9 +137,18 @@ func _render_side(units: Array, side: String) -> void:
 		var hp_label: Label = row["hp_label"]
 		hp_label.text = "%d/%d" % [hp, max_hp]
 		var name_label: Label = row["name_label"]
-		name_label.modulate = Color(1, 1, 1) if hp > 0 else Color(1, 1, 1, 0.4)
+		name_label.modulate = Color.WHITE if hp > 0 else Color(1, 1, 1, 0.4)
 		var portrait: TextureRect = row["portrait"]
-		portrait.modulate = Color.WHITE if hp > 0 else Color(0.46, 0.49, 0.58, 0.52)
+		# O estado de vida é a autoridade visual. Isto também desfaz uma animação
+		# interrompida por um ataque seguinte, evitando que um vivo pareça morto.
+		portrait.modulate = Color.WHITE if hp > 0 else DEAD_MODULATE
+		portrait.scale = Vector2.ONE if hp > 0 else DEAD_SCALE
+		portrait.rotation = 0.0
+		var hp_color := Color(0.72, 0.82, 0.94)
+		if hp > 0 and hp * 5 <= max_hp:
+			hp_color = Color(1.0, 0.7, 0.34)
+		hp_label.add_theme_color_override("font_color", hp_color if hp > 0 else Color(0.55, 0.58, 0.66))
+	_mark_current_enemy_target()
 
 
 ## Vitória credita recompensa/progressão via GameState.resolve_battle_end
@@ -191,10 +202,10 @@ func _build_rows() -> void:
 	_displayed_wave_index = int(_state.get("wave_index", 0))
 	_clear_box(enemies_box)
 	_clear_box(allies_box)
-	for unit in _state["enemies"]:
-		enemies_box.add_child(_make_row("enemy", unit, false))
-	for unit in _state["allies"]:
-		allies_box.add_child(_make_row("ally", unit, true))
+	for i in _state["enemies"].size():
+		enemies_box.add_child(_make_row("enemy", _state["enemies"][i], false, i))
+	for i in _state["allies"].size():
+		allies_box.add_child(_make_row("ally", _state["allies"][i], true, i))
 
 
 func _clear_box(box: Control) -> void:
@@ -203,7 +214,7 @@ func _clear_box(box: Control) -> void:
 		child.queue_free()
 
 
-func _make_row(side: String, unit: Dictionary, is_ally: bool) -> PanelContainer:
+func _make_row(side: String, unit: Dictionary, is_ally: bool, unit_index: int) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(CARD_MIN_WIDTH, 206)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -224,6 +235,15 @@ func _make_row(side: String, unit: Dictionary, is_ally: bool) -> PanelContainer:
 	column.add_theme_constant_override("separation", 5)
 	card.add_child(column)
 
+	var target_badge := Label.new()
+	target_badge.name = "TargetBadge"
+	target_badge.text = Loc.t("battle.target")
+	target_badge.add_theme_font_size_override("font_size", 11)
+	target_badge.add_theme_color_override("font_color", Color(0.3, 0.91, 1.0))
+	target_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target_badge.visible = false
+	column.add_child(target_badge)
+
 	var portrait := TextureRect.new()
 	ArtHelper.configure_rect(portrait, _portrait_for(unit, is_ally), Vector2(PORTRAIT_SIZE, PORTRAIT_SIZE))
 	portrait.name = "Portrait"
@@ -235,6 +255,8 @@ func _make_row(side: String, unit: Dictionary, is_ally: bool) -> PanelContainer:
 	name_label.add_theme_font_size_override("font_size", 13)
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.94, 1.0))
 	name_label.text = str(unit.get("display_name", unit.get("id", "?")))
+	if not is_ally:
+		name_label.text += " #%d" % (unit_index + 1)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
 	column.add_child(name_label)
@@ -265,8 +287,31 @@ func _make_row(side: String, unit: Dictionary, is_ally: bool) -> PanelContainer:
 		"name_label": name_label,
 		"portrait": portrait,
 		"card": card,
+		"panel": panel,
+		"target_badge": target_badge,
+		"is_ally": is_ally,
+		"base_border_color": panel.border_color,
 	}
 	return card
+
+
+func _mark_current_enemy_target() -> void:
+	var target_id := ""
+	for enemy in _state.get("enemies", []):
+		if int(enemy.get("hp", 0)) > 0:
+			target_id = String(enemy.get("id", ""))
+			break
+	for enemy in _state.get("enemies", []):
+		var row_key := "enemy:%s" % String(enemy.get("id", ""))
+		var row: Dictionary = _rows.get(row_key, {})
+		if row.is_empty():
+			continue
+		var is_target := String(enemy.get("id", "")) == target_id
+		var badge: Label = row["target_badge"]
+		badge.visible = is_target
+		var panel: StyleBoxFlat = row["panel"]
+		panel.border_color = Color(0.22, 0.86, 1.0, 0.95) if is_target else row["base_border_color"]
+		panel.set_border_width_all(3 if is_target else 1)
 
 
 func _portrait_for(unit: Dictionary, is_ally: bool) -> Texture2D:
@@ -303,29 +348,27 @@ func _animate_event(ev: Dictionary) -> void:
 	target_hp_label.text = "%d/%d" % [int(target.get("hp", 0)), target_max_hp]
 	if bool(ev.get("killed", false)):
 		var death_tween := _replace_node_tween(target_portrait)
-		death_tween.tween_property(target_portrait, "modulate", Color(0.38, 0.42, 0.52, 0.25), 0.25)
-		death_tween.parallel().tween_property(target_portrait, "scale", Vector2(0.78, 0.78), 0.25)
+		death_tween.tween_property(target_portrait, "modulate", DEAD_MODULATE, 0.25)
+		death_tween.parallel().tween_property(target_portrait, "scale", DEAD_SCALE, 0.25)
 	else:
 		var hit_color := Color(1.0, 0.42, 0.45) if String(target.get("side", "")) == "enemy" else Color(1.0, 0.66, 0.54)
-		var origin := target_portrait.position
 		var hit_tween := _replace_node_tween(target_portrait)
-		hit_tween.tween_property(target_portrait, "position", origin + Vector2(6, 0), 0.04)
+		hit_tween.tween_property(target_portrait, "rotation", 0.045, 0.04)
 		hit_tween.parallel().tween_property(target_portrait, "modulate", hit_color, 0.07)
-		hit_tween.tween_property(target_portrait, "position", origin - Vector2(5, 0), 0.05)
-		hit_tween.tween_property(target_portrait, "position", origin, 0.05)
+		hit_tween.tween_property(target_portrait, "rotation", -0.035, 0.05)
+		hit_tween.tween_property(target_portrait, "rotation", 0.0, 0.05)
 		hit_tween.parallel().tween_property(target_portrait, "modulate", Color.WHITE, 0.16)
 	_add_damage_popup(target_portrait, int(ev.get("damage", 0)), bool(ev.get("killed", false)))
 
 
 func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
-	var origin := portrait.position
 	var direction := -1.0 if is_ally else 1.0
 	var tween := _replace_node_tween(portrait)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(portrait, "position", origin + Vector2(0, 13.0 * direction), 0.09)
+	tween.tween_property(portrait, "rotation", 0.025 * direction, 0.09)
 	tween.parallel().tween_property(portrait, "scale", Vector2(1.1, 1.1), 0.09)
-	tween.tween_property(portrait, "position", origin, 0.13)
+	tween.tween_property(portrait, "rotation", 0.0, 0.13)
 	tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 0.13)
 
 

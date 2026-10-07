@@ -18,6 +18,9 @@ static func run(t: Node) -> void:
 		"shadow_essence": 7,
 		"highest_gate_cleared": 2,
 		"last_background_unix": 1700000000,
+		"afk_chest_progress_seconds": 3600,
+		"afk_chests_available": 2,
+		"afk_chest_last_tick_unix": 1700000000,
 		"roster": {
 			"jinwoo": { "level": 3, "unlocked": true },
 			"shadow_soldier": { "level": 2, "unlocked": true },
@@ -30,6 +33,21 @@ static func run(t: Node) -> void:
 	t.check(int(result["state"]["gold"]) == 456, "gold preservado no roundtrip")
 	t.check(int(result["state"]["roster"]["shadow_soldier"]["level"]) == 2, "nível da sombra preservado")
 	t.check(int(result["state"]["last_background_unix"]) == 1700000000, "last_background_unix preservado")
+	t.check(int(result["state"]["afk_chest_progress_seconds"]) == 3600
+		and int(result["state"]["afk_chests_available"]) == 2
+		and int(result["state"]["afk_chest_last_tick_unix"]) == 1700000000,
+		"progresso e baús AFK preservados no roundtrip v2")
+
+	# 1b) Migração v1 mantém last_background e inicia os campos de baú
+	var legacy := _valid_state({ "schema_version": 1, "last_background_unix": 1700000123 })
+	_write_raw(JSON.stringify(legacy))
+	result = SaveService.load_state()
+	t.check(result["status"] == "loaded" and int(result["state"]["schema_version"]) == 2,
+		"save v1 migra para schema v2")
+	t.check(int(result["state"]["afk_chest_progress_seconds"]) == 0
+		and int(result["state"]["afk_chests_available"]) == 0
+		and int(result["state"]["afk_chest_last_tick_unix"]) == 1700000123,
+		"migração v1 inicializa baú AFK sem apagar horário salvo")
 
 	# 2) JSON corrompido
 	_write_raw("{ isto nao é json !!")

@@ -38,7 +38,7 @@ adb install -r build\gatebreakers-debug.apk
 adb shell monkey -p com.gatebreakers.prototype -c android.intent.category.LAUNCHER 1
 ```
 
-O projeto está na versão `0.2.0` (Android `versionCode=2`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
+O projeto está na versão `0.3.0` (Android `versionCode=3`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
 
 Comandos úteis de diagnóstico:
 
@@ -61,9 +61,9 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Resultado real da última execução (06/10/2026): `=== RESULTADO: 238 passaram, 0 falharam ===`, exit 0**, smoke `--quit-after 120` exit 0, export Android exit 0; APK `0.2.0` (code 2) instalado no aparelho `RXCT301TRHY`.
+**Validação local (06/10/2026): `=== RESULTADO: 281 passaram, 0 falharam ===`, exit 0.** Inclui reprodução determinística do portal 7, invariantes vivo/morto, baixa vida visual, farm, migração schema v2, baús, power guard e red dots. Smoke e export também passaram; APK `0.3.0`/`versionCode=3` conferido por `aapt`. O aparelho não foi usado nesta sessão por decisão do proprietário.
 
-Suites (7): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
+Suites (8): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
 
 ## 4. Estado das fases (spec §9)
@@ -77,11 +77,13 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 4 Melhorias e sombras | concluída | testes melhorias verdes (migração de save incluída); verificado no aparelho |
 | 5 Cartões, configurações, acessibilidade e validação Android | concluída | testes e instalação no aparelho confirmados |
 | 6 Visual e gamefeel v0.2 | primeira entrega concluída | retratos SVG por onda, cenário de batalha, animações de golpes/dano, ícones e tema; suíte 238/238; Filipe confirmou teste visual positivo |
+| 7 Ciclo PML v0.3 | implementação e build concluídos; teste físico pendente | auto-limpeza foreground, baús AFK, power guard, red dots; schema v2 migra saves v1; suíte 281/281, smoke/export verdes |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
 - **Sem áudio real**: toggles de som/vibração guardam a preferência (`user://settings.cfg`) mas não existem sons/haptics implementados.
 - **Arte temporária**: retratos e ilustrações SVG originais já integrados às telas; ainda são arte vetorial de protótipo, não animação quadro a quadro nem ilustração final. Nada de conteúdo protegido de *Solo Leveling* foi incorporado.
+- **Arte v0.3 aguardando**: novas ilustrações manhwa estão bloqueadas até haver saldo pré-pago Gemini API; nenhuma imagem piloto foi gerada ainda.
 - **Relógio local manipulável**: recompensas AFK baseiam-se no relógio do aparelho (aceite no §11 para protótipo offline).
 - **Sem serviços online**: nenhuma função depende de internet (critério 12); sem contas/nuvem/leaderboards.
 - **Decisão de design**: varredura de portal de chefe já concluído concede a essência do chefe (1 linha de código se Filipe quiser mudar).
@@ -93,8 +95,10 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 - `scripts/autoload/game_state.gd` — todo o estado + regras de economia (fonte única).
 - `scripts/systems/save_service.gd` — gravação atómica, validação, migrações (`SCHEMA_VERSION`).
+- Save schema atual v2: `afk_chest_progress_seconds`, `afk_chests_available`, `afk_chest_last_tick_unix`; saves v1 migram automaticamente.
 - `scripts/systems/combat_service.gd` — combate determinístico puro (sem RNG).
 - `scripts/systems/idle_reward_service.gd` — cálculo AFK puro.
+- `scripts/systems/auto_farm_controller.gd` — auto-limpeza foreground; regras/recompensas continuam nos services.
 - `scripts/systems/settings_service.gd` — preferências locais.
 - `scripts/systems/content_db.gd` + `data/*.json` — unidades, portais, cartões narrativos.
 - `scripts/ui/art_helper.gd` + `assets/` — carregamento e apresentação da arte vetorial original.
@@ -104,4 +108,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: jogar batalhas no APK `0.2.0` e recolher feedback de ritmo/clareza dos golpes. Depois decidir se refinamos a arte SVG, incluímos animações/efeitos adicionais ou retomamos áudio e vibração (adiados nesta etapa).
+Próximo passo: amanhã instalar `build/gatebreakers-debug.apk` com `adb install -r` (preserva o save) e testar no aparelho: auto-farm vitória/derrota/segundo plano, baú AFK, aviso de poder, red dots e monstro com pouca vida. Não usar “Repor progresso”. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.

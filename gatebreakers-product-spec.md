@@ -371,3 +371,33 @@ Conta, nuvem, multiplayer, PvP, guilda, gacha, publicidade, compras, temporadas,
 ## 13. Aprovação necessária antes da implementação
 
 O proprietário confirmou que este primeiro build é um protótipo privado de fã/estudo, sem publicação por enquanto. Ainda é necessário aprovar explicitamente, antes do handoff final, a direção técnica **Godot 4.x + GDScript** e o escopo proposto: Android vertical, 2D, offline-first, sem serviços online ou monetização no MVP.
+
+## 14. Adendo aprovado — ciclo PML para Gatebreakers v0.3
+
+**Aprovado por Filipe em 06/10/2026.** Este adendo amplia o MVP privado com padrões de jogabilidade observados em `reference-pocket-monster-league.md`. A referência serve apenas para aprender fluxos e arquitetura: não copiar código, textos, arte, fórmulas numéricas ou tabelas do PML. O tema, nomes e ilustrações continuam originais para o protótipo privado de *Solo Leveling*.
+
+### 14.1 Auto-limpeza de portais (online/foreground)
+
+- A tela Portais oferece um toggle de auto-limpeza. Enquanto o app está em primeiro plano, simula o **portal atual** com o `CombatService` determinístico.
+- Cada vitória concede a recompensa normal, avança a progressão e o farm tenta o próximo portal após uma pausa curta; derrota encerra o farm e mostra o resultado, sem recompensa.
+- Enviar o app para segundo plano encerra o farm. Não há loop de batalha, serviço online nem conexão de rede.
+- O jogador pode parar o farm manualmente; iniciar uma batalha manual também o encerra. O estado “farm ativo” é temporário e não volta sozinho após reiniciar o app.
+
+### 14.2 Baús-marcos do AFK
+
+- O teto de ausência continua em **8 horas**; taxas e bônus seguem no `BalanceConfig`.
+- Separado da recompensa AFK normal, o tempo acumulado avança um marco a cada **2 horas**. Cada marco gera um baú resgatável que concede bônus configurável de ouro e XP, escalado pelo maior portal concluído; não concede essência.
+- A barra do Baú do Sistema exibe progresso e quantidade de baús prontos. Resgatar baús não altera o relatório nem credita novamente o AFK normal.
+- O save schema v2 armazena progresso residual, baús disponíveis e a referência de tempo do contador; saves v1 migram automaticamente com progresso inicial zerado.
+
+### 14.3 Guarda de poder e indicadores de ação
+
+- Na preparação, comparar o poder da equipe com o poder do maior grupo inimigo de uma onda. Se `0.8 × poder_inimigo >= poder_equipe`, mostrar risco alto e exigir uma segunda confirmação antes do combate; “Ajustar equipe” retorna à navegação para mudar a formação.
+- A fórmula de poder e a razão de risco ficam centralizadas em `BalanceConfig`.
+- A ordem de apresentação das recompensas é ouro → essência (quando existir) → XP.
+- Um cálculo central de red dots sinaliza baús AFK resgatáveis e melhorias de Caçador/Sombras disponíveis.
+
+### 14.4 Fora deste adendo
+
+- Cotas diárias de varredura, marcos de varredura, recompensas pagas, VIP, anúncios, multiplayer e funcionalidades online não fazem parte desta rodada.
+- Áudio e vibração continuam adiados. O teto AFK permanece em 8 horas.

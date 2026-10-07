@@ -15,12 +15,30 @@ const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 @onready var gate_list: VBoxContainer = $Margin/VBox/GateScroll/GateList
 @onready var start_button: Button = $Margin/VBox/StartButton
 @onready var warning_label: Label = $Margin/VBox/WarningLabel
+@onready var auto_farm_status: Label = $Margin/VBox/AutoFarmPanel/AutoFarmRow/AutoFarmStatus
+@onready var auto_farm_button: Button = $Margin/VBox/AutoFarmPanel/AutoFarmRow/AutoFarmButton
+@onready var chest_progress: ProgressBar = $Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo/ChestProgress
+@onready var chest_progress_label: Label = $Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo/ChestProgressLabel
+@onready var chest_claim_button: Button = $Margin/VBox/AfkChestPanel/AfkChestRow/ChestClaimButton
+
+var _auto_farm_controller: Node = null
+var _syncing_auto_farm_button: bool = false
+var _chest_refresh_accumulator: float = 0.0
 
 
 func _ready() -> void:
+	add_to_group("portal_map")
 	GameState.state_changed.connect(_refresh)
 	start_button.pressed.connect(_on_start_pressed)
+	auto_farm_button.toggled.connect(_on_auto_farm_toggled)
+	chest_claim_button.pressed.connect(_on_claim_afk_chests)
 	$Margin/VBox/Title.text = Loc.t("ui.tab.portals")
+	$Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo/ChestTitle.text = Loc.t("afk.chest_title")
+	ArtHelper.configure_rect(
+		$Margin/VBox/AfkChestPanel/AfkChestRow/ChestIcon,
+		ArtHelper.texture("res://assets/icons/icon_chest.svg"), Vector2(46, 46)
+	)
+	call_deferred("_connect_auto_farm_controller")
 	ArtHelper.configure_rect($Margin/VBox/StatsRow/LevelStat/LevelIcon, ArtHelper.texture("res://assets/icons/icon_hunter.svg"), Vector2(28, 28))
 	ArtHelper.configure_rect($Margin/VBox/StatsRow/GoldStat/GoldIcon, ArtHelper.texture("res://assets/icons/icon_gold.svg"), Vector2(28, 28))
 	ArtHelper.configure_rect($Margin/VBox/StatsRow/XpStat/XpIcon, ArtHelper.texture("res://assets/icons/icon_xp.svg"), Vector2(28, 28))
@@ -39,6 +57,92 @@ func _refresh() -> void:
 	warning_label.text = GameState.load_warning
 	warning_label.visible = not GameState.load_warning.is_empty()
 	_rebuild_gate_list()
+	_refresh_afk_chest()
+	_refresh_auto_farm_ui()
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		return
+	_chest_refresh_accumulator += delta
+	if _chest_refresh_accumulator >= 1.0:
+		_chest_refresh_accumulator = 0.0
+		_refresh_afk_chest()
+
+
+func _connect_auto_farm_controller() -> void:
+	if _auto_farm_controller != null and is_instance_valid(_auto_farm_controller):
+		return
+	var controllers := get_tree().get_nodes_in_group("auto_farm")
+	if controllers.is_empty():
+		return
+	register_auto_farm_controller(controllers[0])
+
+
+func register_auto_farm_controller(controller: Node) -> void:
+	if _auto_farm_controller == controller:
+		_refresh_auto_farm_ui()
+		return
+	_auto_farm_controller = controller
+	if controller.has_signal("status_changed"):
+		controller.connect("status_changed", _refresh_auto_farm_ui)
+	_refresh_auto_farm_ui()
+
+
+func _refresh_auto_farm_ui() -> void:
+	if not is_instance_valid(auto_farm_button):
+		return
+	if _auto_farm_controller == null or not is_instance_valid(_auto_farm_controller):
+		_connect_auto_farm_controller()
+	if _auto_farm_controller == null:
+		auto_farm_status.text = Loc.t("portal.auto_farm_ready")
+		auto_farm_button.text = Loc.t("portal.auto_farm_start")
+		return
+	_syncing_auto_farm_button = true
+	var running := bool(_auto_farm_controller.get("is_running"))
+	auto_farm_button.set_pressed_no_signal(running)
+	auto_farm_button.text = Loc.t("portal.auto_farm_stop") if running else Loc.t("portal.auto_farm_start")
+	auto_farm_status.text = String(_auto_farm_controller.get("status_text"))
+	_syncing_auto_farm_button = false
+
+
+func _on_auto_farm_toggled(pressed: bool) -> void:
+	if _syncing_auto_farm_button:
+		return
+	_connect_auto_farm_controller()
+	if _auto_farm_controller == null:
+		return
+	_auto_farm_controller.call("set_running", pressed)
+	_refresh_auto_farm_ui()
+
+
+func _refresh_afk_chest() -> void:
+	var status := GameState.afk_chest_status()
+	var milestone := maxi(int(status["milestone_seconds"]), 1)
+	var progress := int(status["progress_seconds"])
+	var available := int(status["available"])
+	chest_progress.max_value = milestone
+	chest_progress.value = progress
+	chest_claim_button.disabled = available <= 0
+	if available > 0:
+		chest_progress_label.text = Loc.t("afk.chest_ready") % available
+		chest_claim_button.text = Loc.t("afk.chest_claim_count") % available
+	else:
+		chest_progress_label.text = Loc.t("afk.chest_progress") % [progress / 60, milestone / 60]
+		chest_claim_button.text = Loc.t("afk.chest_waiting")
+
+
+func _on_claim_afk_chests() -> void:
+	var rewards := GameState.claim_afk_chests()
+	if rewards.is_empty():
+		return
+	var parts := [
+		"+%d %s" % [int(rewards["gold"]), Loc.t("ui.gold").to_lower()],
+		"+%d %s" % [int(rewards["xp"]), Loc.t("ui.xp")],
+	]
+	sweep_feedback.text = Loc.t("afk.chest_claimed") % [int(rewards["count"]), " · ".join(parts)]
+	sweep_feedback.visible = true
+	_refresh_afk_chest()
 
 
 func _rebuild_gate_list() -> void:
@@ -116,10 +220,10 @@ func _on_sweep(gate: int) -> void:
 		return
 	var parts: Array = [
 		"+%d %s" % [int(rewards["gold"]), Loc.t("ui.gold")],
-		"+%d %s" % [int(rewards["xp"]), Loc.t("ui.xp")],
 	]
 	if int(rewards["essence"]) > 0:
 		parts.append("+%d %s" % [int(rewards["essence"]), Loc.t("ui.essence")])
+	parts.append("+%d %s" % [int(rewards["xp"]), Loc.t("ui.xp")])
 	sweep_feedback.text = "%s %d — %s %s" % [
 		Loc.t("ui.gate"), gate, Loc.t("portal.sweep_got"), " · ".join(parts),
 	]
@@ -127,4 +231,6 @@ func _on_sweep(gate: int) -> void:
 
 
 func _on_start_pressed() -> void:
+	if _auto_farm_controller != null and bool(_auto_farm_controller.get("is_running")):
+		_auto_farm_controller.call("set_running", false)
 	get_tree().call_group("navigation", "show_overlay", "gate_prep")

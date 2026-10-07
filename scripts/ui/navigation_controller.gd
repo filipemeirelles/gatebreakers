@@ -29,12 +29,15 @@ const BUTTON_NAMES := {
 }
 
 var current: Destination = Destination.PORTALS
+var _red_dot_accumulator: float = 0.0
 
 
 func _ready() -> void:
 	add_to_group("navigation")
 	_setup_buttons()
+	GameState.state_changed.connect(_refresh_red_dots)
 	goto_destination(current)
+	_refresh_red_dots()
 	_apply_safe_area()
 	resized.connect(_apply_safe_area)
 	# Relatório AFK calculado pelo GameState no arranque (spec §4/§5.2);
@@ -53,10 +56,44 @@ func _setup_buttons() -> void:
 			continue
 		button.text = Loc.t("ui.tab.%s" % Destination.keys()[destination].to_lower())
 		button.pressed.connect(_on_tab_pressed.bind(destination))
+		var badge := button.get_node_or_null("RedDot") as Label
+		if badge == null:
+			badge = Label.new()
+			badge.name = "RedDot"
+			badge.text = "●"
+			badge.add_theme_font_size_override("font_size", 17)
+			badge.add_theme_color_override("font_color", Color(1.0, 0.22, 0.32))
+			badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+			badge.offset_left = -23
+			badge.offset_top = -2
+			badge.offset_right = -5
+			badge.offset_bottom = 16
+			button.add_child(badge)
 
 
 func _on_tab_pressed(destination: Destination) -> void:
 	goto_destination(destination)
+
+
+func _process(delta: float) -> void:
+	_red_dot_accumulator += delta
+	if _red_dot_accumulator >= 1.0:
+		_red_dot_accumulator = 0.0
+		_refresh_red_dots()
+
+
+func _refresh_red_dots() -> void:
+	var dots := GameState.red_dots()
+	for destination in BUTTON_NAMES:
+		var button := get_node_or_null("BottomBar/%s" % BUTTON_NAMES[destination]) as Button
+		if button == null:
+			continue
+		var badge := button.get_node_or_null("RedDot") as Label
+		if badge != null:
+			badge.visible = bool(dots.get(Destination.keys()[destination].to_lower(), false))
 
 
 ## Mostra exatamente uma tela de destino; as restantes ficam ocultas.

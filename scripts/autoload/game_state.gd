@@ -5,7 +5,7 @@ extends Node
 signal state_changed
 
 ## Versão do schema persistido — SaveService usa para migração.
-const SCHEMA_VERSION: int = 1
+const SCHEMA_VERSION: int = 2
 ## Jinwoo + até três sombras (spec §4).
 const MAX_TEAM_SIZE: int = 4
 
@@ -18,6 +18,10 @@ var gold: int = 0
 var shadow_essence: int = 0
 var highest_gate_cleared: int = 0
 var last_background_unix: int = 0
+## Tempo residual para o próximo baú AFK e quantidade de baús prontos.
+var afk_chest_progress_seconds: int = 0
+var afk_chests_available: int = 0
+var afk_chest_last_tick_unix: int = 0
 ## unit_id -> { "level": int, "unlocked": bool }
 var roster: Dictionary = {}
 ## ordem da formação; sempre começa por Jinwoo
@@ -53,8 +57,11 @@ func _notification(what: int) -> void:
 	match what:
 		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST:
 			# Segundo plano/fecho: regista o horário para a próxima ausência (spec §4).
-			last_background_unix = int(Time.get_unix_time_from_system())
+			var now := int(Time.get_unix_time_from_system())
+			_accrue_afk_chests(now)
+			last_background_unix = now
 			save_now()
+			state_changed.emit()
 		NOTIFICATION_APPLICATION_RESUMED:
 			var report := apply_afk_rewards(int(Time.get_unix_time_from_system()))
 			if not report.is_empty():
@@ -72,6 +79,9 @@ func reset_to_new_game() -> void:
 	shadow_essence = BalanceConfig.starting_shadow_essence()
 	highest_gate_cleared = BalanceConfig.starting_highest_gate_cleared()
 	last_background_unix = 0
+	afk_chest_progress_seconds = 0
+	afk_chests_available = 0
+	afk_chest_last_tick_unix = 0
 	roster.clear()
 	for unit_id in ContentDB.unit_ids_at_start():
 		roster[unit_id] = { "level": 1, "unlocked": true }
@@ -137,6 +147,46 @@ func team_units() -> Array:
 			"speed": int(stats["speed"]),
 		})
 	return out
+
+
+func team_power() -> int:
+	var power := 0
+	for unit in team_units():
+		power += BalanceConfig.combat_power(unit)
+	return power
+
+
+## Poder do maior grupo de inimigos em uma onda do portal.
+func gate_power(gate: int) -> int:
+	var definition := ContentDB.gate(gate)
+	var best_wave_power := 0
+	for wave in definition.get("waves", []):
+		var wave_power := 0
+		for enemy in wave:
+			wave_power += BalanceConfig.combat_power(enemy)
+		best_wave_power = maxi(best_wave_power, wave_power)
+	return best_wave_power
+
+
+func gate_is_high_risk(gate: int) -> bool:
+	var power := team_power()
+	return power > 0 and float(gate_power(gate)) * BalanceConfig.danger_enemy_power_ratio() >= float(power)
+
+
+func red_dots() -> Dictionary:
+	var hunter_ready := bool(hunter_upgrade_info().get("available", false))
+	var shadow_ready := false
+	for unit_id in roster:
+		if String(unit_id) == "jinwoo" or not is_unlocked(String(unit_id)):
+			continue
+		if bool(shadow_upgrade_info(String(unit_id)).get("available", false)):
+			shadow_ready = true
+			break
+	return {
+		"portals": int(afk_chest_status(int(Time.get_unix_time_from_system()))["available"]) > 0,
+		"hunter": hunter_ready,
+		"shadows": shadow_ready,
+	}
 
 
 # --- Mutações ---
@@ -258,7 +308,12 @@ func upgrade_shadow(unit_id: String) -> Dictionary:
 func clear_gate(gate: int) -> void:
 	if gate != highest_gate_cleared + 1:
 		return
+	var first_gate_clear := highest_gate_cleared == 0
 	highest_gate_cleared = gate
+	if first_gate_clear:
+		afk_chest_progress_seconds = 0
+		afk_chests_available = 0
+		afk_chest_last_tick_unix = int(Time.get_unix_time_from_system())
 	_unlock_rewards_for_gate(gate)
 	queue_story_for_gate(gate)
 	state_changed.emit()
@@ -348,13 +403,70 @@ func sweep_gate(gate: int) -> Dictionary:
 ## repetição não duplica e o relógio retrocedido recupera sem negativos.
 func apply_afk_rewards(now_unix: int) -> Dictionary:
 	var report := IdleRewardService.build_report(now_unix, last_background_unix, highest_gate_cleared)
+	var chest_progress_changed := _accrue_afk_chests(now_unix)
 	last_background_unix = now_unix
 	if int(report["gold"]) <= 0 and int(report["xp"]) <= 0:
 		save_now()
+		if chest_progress_changed:
+			state_changed.emit()
 		return {}
 	add_rewards(int(report["gold"]), int(report["xp"]), 0)
 	save_now()
 	return report
+
+
+func _accrue_afk_chests(now_unix: int) -> bool:
+	if afk_chest_last_tick_unix <= 0:
+		afk_chest_last_tick_unix = now_unix
+		return false
+	var elapsed := IdleRewardService.compute_elapsed(
+		now_unix, afk_chest_last_tick_unix, BalanceConfig.afk_cap_seconds()
+	)
+	afk_chest_last_tick_unix = now_unix
+	if highest_gate_cleared <= 0 or elapsed <= 0:
+		return false
+	var milestone_seconds := BalanceConfig.afk_chest_milestone_seconds()
+	var accumulated := afk_chest_progress_seconds + elapsed
+	afk_chests_available += int(floor(float(accumulated) / float(milestone_seconds)))
+	afk_chest_progress_seconds = accumulated % milestone_seconds
+	return true
+
+
+func afk_chest_status(now_unix: int = -1) -> Dictionary:
+	if now_unix < 0:
+		now_unix = int(Time.get_unix_time_from_system())
+	var elapsed := 0
+	if highest_gate_cleared > 0:
+		elapsed = IdleRewardService.compute_elapsed(
+			now_unix, afk_chest_last_tick_unix, BalanceConfig.afk_cap_seconds()
+		)
+	var milestone_seconds := BalanceConfig.afk_chest_milestone_seconds()
+	var accumulated := afk_chest_progress_seconds + elapsed
+	return {
+		"progress_seconds": accumulated % milestone_seconds,
+		"milestone_seconds": milestone_seconds,
+		"available": afk_chests_available + int(floor(float(accumulated) / float(milestone_seconds))),
+	}
+
+
+## Resgata todos os baús-marcos acumulados separadamente do AFK normal.
+func claim_afk_chests(now_unix: int = -1) -> Dictionary:
+	if now_unix < 0:
+		now_unix = int(Time.get_unix_time_from_system())
+	_accrue_afk_chests(now_unix)
+	var count := afk_chests_available
+	if count <= 0:
+		return {}
+	var gate := maxi(highest_gate_cleared, 1)
+	var rewards := {
+		"count": count,
+		"gold": BalanceConfig.afk_chest_gold_per_gate() * gate * count,
+		"xp": BalanceConfig.afk_chest_xp_per_gate() * gate * count,
+	}
+	afk_chests_available = 0
+	add_rewards(int(rewards["gold"]), int(rewards["xp"]), 0)
+	save_now()
+	return rewards
 
 
 # --- Cartões narrativos (spec §4 linha 86) ---
@@ -408,6 +520,9 @@ func to_dict() -> Dictionary:
 		"shadow_essence": shadow_essence,
 		"highest_gate_cleared": highest_gate_cleared,
 		"last_background_unix": last_background_unix,
+		"afk_chest_progress_seconds": afk_chest_progress_seconds,
+		"afk_chests_available": afk_chests_available,
+		"afk_chest_last_tick_unix": afk_chest_last_tick_unix,
 		"roster": roster.duplicate(true),
 		"formation": formation.duplicate(),
 		"story_cards_seen": story_cards_seen.duplicate(),
@@ -428,6 +543,9 @@ func from_dict(data: Dictionary) -> void:
 	shadow_essence = int(data["shadow_essence"])
 	highest_gate_cleared = int(data["highest_gate_cleared"])
 	last_background_unix = int(data["last_background_unix"])
+	afk_chest_progress_seconds = int(data.get("afk_chest_progress_seconds", 0))
+	afk_chests_available = int(data.get("afk_chests_available", 0))
+	afk_chest_last_tick_unix = int(data.get("afk_chest_last_tick_unix", last_background_unix))
 	roster.clear()
 	for unit_id in data.get("roster", {}):
 		var entry: Dictionary = data["roster"][unit_id]

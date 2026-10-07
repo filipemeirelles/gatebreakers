@@ -32,6 +32,7 @@ func _run_all() -> void:
 	NavigationTests.run(self)
 	CombatServiceTests.run(self)
 	BattleScreenTests.run(self)
+	AutoFarmTests.run(self)
 	IdleRewardTests.run(self)
 	UpgradeTests.run(self)
 	Fase5Tests.run(self)
