@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "afk": {
+    "cap_seconds": 28800
+  },
+  "leveling": {
+    "max_level": 20,
+    "hunter_xp_base_per_level": 100,
+    "gold_cost_base_per_level": 25,
+    "shadow_gold_cost_base_per_level": 25,
+    "shadow_essence_cost_base_per_level": 5,
+    "hp_growth_per_level": 0.10,
+    "attack_growth_per_level": 0.08,
+    "defense_growth_per_level": 0.05
+  },
+  "combat": {
+    "min_damage": 1,
+    "defense_divisor": 2,
+    "waves_per_gate": 3,
+    "enemies_per_normal_wave": 2
+  },
+  "enemy_scaling": {
+    "base_hp": 60,
+    "hp_per_gate": 20,
+    "base_attack": 10,
+    "attack_per_gate": 2,
+    "base_defense": 2,
+    "defense_per_gate": 1,
+    "base_speed": 7,
+    "speed_gate_divisor": 3,
+    "boss_hp_multiplier": 4.0,
+    "boss_attack_multiplier": 1.5,
+    "boss_defense_multiplier": 1.2
+  },
+  "rewards": {
+    "gold_per_enemy_per_gate": 10,
+    "hunter_xp_per_enemy_per_gate": 5,
+    "boss_shadow_essence": 50
+  },
+  "afk_rates": {
+    "gold_per_hour_base": 10,
+    "hunter_xp_per_hour_base": 5
+  },
+  "starting": {
+    "gold": 100,
+    "hunter_xp": 0,
+    "shadow_essence": 0,
+    "highest_gate_cleared": 0
+  }
+}

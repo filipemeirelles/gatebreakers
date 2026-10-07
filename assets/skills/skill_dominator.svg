@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="domCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="20" fill="#070c18"/>
+  <rect x="4" y="4" width="120" height="120" rx="16" fill="none" stroke="#00f0ff" stroke-width="2.5"/>
+  <!-- Gravity / Telekinetic shockwave rings -->
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.4" stroke-dasharray="6 4"/>
+  <circle cx="64" cy="64" r="36" fill="none" stroke="#38bdf8" stroke-width="2.5" opacity="0.7"/>
+  <circle cx="64" cy="64" r="24" fill="url(#domCore)"/>
+  <!-- Outstretched Ruler's Hand silhouette -->
+  <path d="M 52 88 L 52 64 L 58 44 L 64 42 L 70 44 L 76 64 L 76 88 Z" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+  <circle cx="64" cy="54" r="4" fill="#ffffff"/>
+</svg>

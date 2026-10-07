@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="ebBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#450a0a"/>
+      <stop offset="65%" stop-color="#180404"/>
+      <stop offset="100%" stop-color="#080101"/>
+    </radialGradient>
+    <linearGradient id="ebHorn" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="50%" stop-color="#7f1d1d"/>
+      <stop offset="100%" stop-color="#1c0404"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="28" fill="url(#ebBg)" />
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#ef4444" stroke-width="3.5" opacity="0.9"/>
+
+  <!-- Massive Curved Demon Horns -->
+  <path d="M 80 80 C 40 20 20 6 6 40 C -8 70 30 110 60 100 Z" fill="url(#ebHorn)" stroke="#fca5a5" stroke-width="2"/>
+  <path d="M 176 80 C 216 20 236 6 250 40 C 264 70 226 110 196 100 Z" fill="url(#ebHorn)" stroke="#fca5a5" stroke-width="2"/>
+
+  <!-- Demonic Titan Face -->
+  <polygon points="68,90 188,90 178,170 128,205 78,170" fill="#1c0707" stroke="#7f1d1d" stroke-width="3"/>
+  <!-- Magma Cracks on Face -->
+  <path d="M 128 90 L 128 135 L 115 145 M 128 135 L 140 145" fill="none" stroke="#ef4444" stroke-width="2"/>
+
+  <!-- 4 Burning Demon Eyes -->
+  <ellipse cx="100" cy="115" rx="8" ry="4" fill="#ef4444"/>
+  <ellipse cx="156" cy="115" rx="8" ry="4" fill="#ef4444"/>
+  <circle cx="100" cy="115" r="2.5" fill="#fef08a"/>
+  <circle cx="156" cy="115" r="2.5" fill="#fef08a"/>
+
+  <ellipse cx="106" cy="130" rx="5" ry="2.5" fill="#ef4444"/>
+  <ellipse cx="150" cy="130" rx="5" ry="2.5" fill="#ef4444"/>
+  <circle cx="106" cy="130" r="1.5" fill="#ffffff"/>
+  <circle cx="150" cy="130" r="1.5" fill="#ffffff"/>
+
+  <!-- Roaring Maw with Lava Fangs -->
+  <polygon points="98,160 158,160 150,185 128,195 106,185" fill="#000000" stroke="#b91c1c" stroke-width="2"/>
+  <polygon points="106,160 112,172 118,160" fill="#fee2e2"/>
+  <polygon points="124,160 128,174 132,160" fill="#fee2e2"/>
+  <polygon points="138,160 144,172 150,160" fill="#fee2e2"/>
+
+  <!-- Title Badge Label -->
+  <rect x="36" y="214" width="184" height="28" rx="8" fill="#200404" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="128" y="233" fill="#ef4444" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="1">CHEFE DO PORTAL</text>
+</svg>

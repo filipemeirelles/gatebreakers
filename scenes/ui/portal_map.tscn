@@ -1,0 +1,84 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/portal_map.gd" id="1_portal"]
+
+[node name="PortalMap" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_portal")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.486, 0.247, 0.949, 1)
+theme_override_font_sizes/font_size = 30
+text = "Portais"
+
+[node name="StatsLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "…"
+
+[node name="BestLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "…"
+
+[node name="GateLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "…"
+
+[node name="SweepFeedbackLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+visible = false
+
+[node name="GateScroll" type="ScrollContainer" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="GateList" type="VBoxContainer" parent="Margin/VBox/GateScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="WarningLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.75, 0.3, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+autowrap_mode = 3
+visible = false
+
+[node name="StartButton" type="Button" parent="Margin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+theme_override_font_sizes/font_size = 22
+text = "Começar"

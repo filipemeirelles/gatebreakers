@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="igBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#450a0a"/>
+      <stop offset="65%" stop-color="#1c0707"/>
+      <stop offset="100%" stop-color="#050202"/>
+    </radialGradient>
+    <linearGradient id="igPlume" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fca5a5"/>
+      <stop offset="30%" stop-color="#ef4444"/>
+      <stop offset="80%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#450a0a"/>
+    </linearGradient>
+    <linearGradient id="igArmor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d0b0b"/>
+      <stop offset="50%" stop-color="#140505"/>
+      <stop offset="100%" stop-color="#080202"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="28" fill="url(#igBg)" />
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#dc2626" stroke-width="3" opacity="0.8"/>
+
+  <!-- Red Blood Aura / Monarch Fire -->
+  <path d="M 40 256 Q 20 140 60 80 Q 128 30 196 80 Q 236 140 216 256 Z" fill="#7f1d1d" opacity="0.4"/>
+
+  <!-- Iconic Long Flowing Red Plume from Helmet (Sweeping to the left/top) -->
+  <path d="M 128 40 C 130 10 90 6 60 16 C 30 26 20 50 16 90 C 12 120 24 150 18 180 C 26 150 28 110 44 80 C 60 54 90 44 128 40 Z" fill="url(#igPlume)" stroke="#f87171" stroke-width="1.5"/>
+
+  <!-- Commander Plate Armor Shoulders -->
+  <path d="M 28 256 L 62 180 L 102 170 L 128 195 L 154 170 L 194 180 L 228 256 Z" fill="url(#igArmor)" stroke="#7f1d1d" stroke-width="2.5"/>
+  <!-- Red Trim on Armor -->
+  <path d="M 62 180 L 102 170 L 128 195 L 154 170 L 194 180" fill="none" stroke="#ef4444" stroke-width="2"/>
+
+  <!-- Sleek Crimson Knight Helmet -->
+  <path d="M 90 145 L 82 85 L 108 42 L 128 26 L 148 42 L 174 85 L 166 145 L 128 174 Z" fill="url(#igArmor)" stroke="#b91c1c" stroke-width="2"/>
+  <!-- Helmet Crest Point -->
+  <polygon points="128,20 134,36 122,36" fill="#ef4444"/>
+
+  <!-- Visor Slit with terrifying White-Red Eye Glare -->
+  <polygon points="98,106 158,106 152,118 128,122 104,118" fill="#000000"/>
+  <ellipse cx="116" cy="112" rx="7" ry="2.5" fill="#ffffff"/>
+  <ellipse cx="140" cy="112" rx="7" ry="2.5" fill="#ffffff"/>
+  <ellipse cx="116" cy="112" rx="4" ry="1.5" fill="#ef4444"/>
+  <ellipse cx="140" cy="112" rx="4" ry="1.5" fill="#ef4444"/>
+
+  <!-- Red Lightning trails from eyes -->
+  <path d="M 110 112 L 94 108 L 86 114 L 72 106" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 146 112 L 162 108 L 170 114 L 184 106" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Giant Greatsword Blade behind -->
+  <polygon points="186,10 200,10 196,160 190,160" fill="#0f0707" stroke="#dc2626" stroke-width="2"/>
+  <line x1="193" y1="10" x2="193" y2="150" stroke="#fca5a5" stroke-width="1.5"/>
+
+  <!-- Title Badge Label -->
+  <rect x="36" y="214" width="184" height="28" rx="8" fill="#180404" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="128" y="233" fill="#f87171" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="1">COMANDANTE IGRIS</text>
+</svg>

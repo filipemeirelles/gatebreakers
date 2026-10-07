@@ -1,0 +1,15 @@
+{
+  "gates": [
+    { "gate": 1, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 2, "boss_wave": false, "clear_unlocks_unit": "shadow_ranged" },
+    { "gate": 3, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 4, "boss_wave": false, "clear_unlocks_unit": "shadow_guardian" },
+    { "gate": 5, "boss_wave": true, "clear_unlocks_unit": "igris" },
+    { "gate": 6, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 7, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 8, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 9, "boss_wave": false, "clear_unlocks_unit": null },
+    { "gate": 10, "boss_wave": true, "clear_unlocks_unit": null }
+  ],
+  "total_gates": 10
+}

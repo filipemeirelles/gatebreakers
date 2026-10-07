@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <defs>
+    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="60%" stop-color="#3b0764"/>
+      <stop offset="100%" stop-color="#0f0728"/>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="96" height="96" rx="20" fill="#0b0d19" />
+  <!-- Shadow mist aura -->
+  <path d="M 24 78 Q 48 88 72 78 Q 80 50 72 32 Q 48 16 24 32 Q 16 50 24 78 Z" fill="url(#shadowGrad)" opacity="0.7"/>
+  <!-- Helmet silhouette -->
+  <path d="M 32 34 L 48 20 L 64 34 L 68 54 L 60 74 L 48 78 L 36 74 L 28 54 Z" fill="#120c24" stroke="#7e22ce" stroke-width="2.5"/>
+  <!-- Crown horns -->
+  <path d="M 32 34 L 22 18 L 36 26 L 48 14 L 60 26 L 74 18 L 64 34" fill="#2e1065" stroke="#a855f7" stroke-width="2"/>
+  <!-- Glowing Monarch Eyes -->
+  <ellipse cx="40" cy="50" rx="6" ry="2.5" fill="#00f0ff" transform="rotate(10 40 50)"/>
+  <ellipse cx="56" cy="50" rx="6" ry="2.5" fill="#00f0ff" transform="rotate(-10 56 50)"/>
+  <circle cx="40" cy="50" r="1.5" fill="#ffffff"/>
+  <circle cx="56" cy="50" r="1.5" fill="#ffffff"/>
+  <!-- Eye flare trails -->
+  <path d="M 36 50 Q 24 46 16 38" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.8"/>
+  <path d="M 60 50 Q 72 46 80 38" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.8"/>
+</svg>

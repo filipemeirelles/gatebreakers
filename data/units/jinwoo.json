@@ -1,0 +1,12 @@
+{
+  "id": "jinwoo",
+  "display_name": "Sung Jinwoo",
+  "role": "hunter",
+  "uses_hunter_xp": true,
+  "base_hp": 100,
+  "base_attack": 20,
+  "base_defense": 6,
+  "base_speed": 10,
+  "art": "res://assets/placeholders/unit_jinwoo.svg",
+  "unlock": { "type": "start" }
+}

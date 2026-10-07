@@ -1,0 +1,132 @@
+extends Control
+class_name NavigationController
+## Controla a navegação entre os destinos principais (spec §5):
+## Portais, Caçador, Sombras e Configurações — máximo de quatro destinos.
+## As telas são filhos fixos; navegar alterna `visible` — nunca duplica telas.
+## Overlays (relatório AFK, preparação, combate, resultado) abrem por cima.
+## A UI só desenha estado e encaminha ações; não calcula regras.
+
+enum Destination { PORTALS, HUNTER, SHADOWS, SETTINGS }
+
+const SCREEN_NAMES := {
+	Destination.PORTALS: "Portals",
+	Destination.HUNTER: "Hunter",
+	Destination.SHADOWS: "Shadows",
+	Destination.SETTINGS: "Settings",
+}
+const OVERLAY_KEYS := {
+	"afk_report": "AfkReport",
+	"gate_prep": "GatePrep",
+	"battle": "Battle",
+	"battle_result": "BattleResult",
+	"story_card": "StoryCard",
+}
+const BUTTON_NAMES := {
+	Destination.PORTALS: "PortalsButton",
+	Destination.HUNTER: "HunterButton",
+	Destination.SHADOWS: "ShadowsButton",
+	Destination.SETTINGS: "SettingsButton",
+}
+
+var current: Destination = Destination.PORTALS
+
+
+func _ready() -> void:
+	add_to_group("navigation")
+	_setup_buttons()
+	goto_destination(current)
+	_apply_safe_area()
+	resized.connect(_apply_safe_area)
+	# Relatório AFK calculado pelo GameState no arranque (spec §4/§5.2);
+	# os cartões narrativos vêm a seguir (fila do GameState).
+	if not GameState.pending_afk_report.is_empty():
+		show_overlay("afk_report", GameState.pending_afk_report)
+		GameState.pending_afk_report = {}
+	else:
+		maybe_show_story()
+
+
+func _setup_buttons() -> void:
+	for destination in BUTTON_NAMES:
+		var button := get_node_or_null("BottomBar/%s" % BUTTON_NAMES[destination]) as Button
+		if button == null:
+			continue
+		button.text = Loc.t("ui.tab.%s" % Destination.keys()[destination].to_lower())
+		button.pressed.connect(_on_tab_pressed.bind(destination))
+
+
+func _on_tab_pressed(destination: Destination) -> void:
+	goto_destination(destination)
+
+
+## Mostra exatamente uma tela de destino; as restantes ficam ocultas.
+func goto_destination(destination: Destination) -> void:
+	current = destination
+	for key in SCREEN_NAMES:
+		var screen := get_node_or_null("Screens/%s" % SCREEN_NAMES[key])
+		if screen != null:
+			screen.visible = key == destination
+	for destination_key in BUTTON_NAMES:
+		var button := get_node_or_null("BottomBar/%s" % BUTTON_NAMES[destination_key]) as Button
+		if button != null:
+			button.button_pressed = destination_key == destination
+
+
+func show_overlay(key: String, data: Variant = null) -> void:
+	var overlay := get_node_or_null("Overlays/%s" % OVERLAY_KEYS.get(key, ""))
+	if overlay == null:
+		return
+	# Toque duplo em "Começar" não pode reiniciar uma batalha em curso (§7).
+	if key == "battle" and overlay.visible:
+		return
+	if data != null and overlay.has_method("configure"):
+		overlay.configure(data)
+	overlay.visible = true
+
+
+func close_overlay(key: String) -> void:
+	var overlay := get_node_or_null("Overlays/%s" % OVERLAY_KEYS.get(key, ""))
+	if overlay != null:
+		overlay.visible = false
+
+
+## Fecha o overlay indicado e mostra o próximo cartão narrativo pendente.
+## Usado pelos botões "Continuar" (relatório AFK, resultado, cartões).
+func close_and_check_story(key: String) -> void:
+	close_overlay(key)
+	maybe_show_story()
+
+
+## Mostra o próximo cartão da fila, se houver e não houver um já aberto.
+func maybe_show_story() -> void:
+	var overlay := get_node_or_null("Overlays/StoryCard")
+	if overlay != null and overlay.visible:
+		return
+	var card_id := GameState.pop_pending_story()
+	if card_id.is_empty():
+		return
+	show_overlay("story_card", { "id": card_id })
+
+
+## Áreas seguras (notch/recorte) — spec §10.14 e §7 (proporções diferentes).
+## Aplica os insets da área segura como frações do viewport, indiferente ao
+## modo de stretch; em ecrãs sem recorte (ou desktop) não altera nada.
+func _apply_safe_area() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var screen := DisplayServer.screen_get_size()
+	var safe := DisplayServer.get_display_safe_area()
+	if screen.x <= 0 or screen.y <= 0 or safe.size.x <= 0 or safe.size.y <= 0:
+		return
+	if safe == Rect2i(Vector2i.ZERO, screen):
+		return
+	var vp: Vector2 = get_viewport_rect().size
+	offset_left = vp.x * (float(safe.position.x) / float(screen.x))
+	offset_top = vp.y * (float(safe.position.y) / float(screen.y))
+	offset_right = -vp.x * (float(screen.x - safe.position.x - safe.size.x) / float(screen.x))
+	offset_bottom = -vp.y * (float(screen.y - safe.position.y - safe.size.y) / float(screen.y))
+
+
+func close_all_overlays() -> void:
+	for key in OVERLAY_KEYS:
+		close_overlay(key)

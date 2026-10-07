@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#854d0e"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="28" fill="#181308"/>
+  <circle cx="32" cy="32" r="26" fill="url(#goldGrad)" stroke="#fef08a" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="20" fill="#ca8a04"/>
+  <!-- Facet crystal shape -->
+  <polygon points="32,16 44,24 44,40 32,48 20,40 20,24" fill="#eab308" stroke="#fef08a" stroke-width="1.5"/>
+  <polygon points="32,20 40,26 40,38 32,44 24,38 24,26" fill="#facc15"/>
+  <polygon points="32,20 40,26 32,32 24,26" fill="#fef08a" opacity="0.9"/>
+</svg>

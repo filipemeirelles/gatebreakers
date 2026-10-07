@@ -1,0 +1,12 @@
+{
+  "id": "shadow_ranged",
+  "display_name": "Sombra Atiradora",
+  "role": "ranged",
+  "uses_hunter_xp": false,
+  "base_hp": 65,
+  "base_attack": 18,
+  "base_defense": 5,
+  "base_speed": 11,
+  "art": "res://assets/placeholders/unit_shadow_ranged.svg",
+  "unlock": { "type": "gate_cleared", "gate": 2 }
+}

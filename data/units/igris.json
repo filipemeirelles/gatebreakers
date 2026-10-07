@@ -1,0 +1,12 @@
+{
+  "id": "igris",
+  "display_name": "Igris",
+  "role": "melee",
+  "uses_hunter_xp": false,
+  "base_hp": 150,
+  "base_attack": 25,
+  "base_defense": 12,
+  "base_speed": 9,
+  "art": "res://assets/placeholders/unit_igris.svg",
+  "unlock": { "type": "gate_cleared", "gate": 5 }
+}

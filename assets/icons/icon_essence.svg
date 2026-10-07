@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="essFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3b0764"/>
+      <stop offset="40%" stop-color="#9333ea"/>
+      <stop offset="85%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#f5d0fe"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="28" fill="#14081e"/>
+  <!-- Dark shadow soul flame -->
+  <path d="M 32 6 C 42 16 50 26 50 40 C 50 50 42 58 32 58 C 22 58 14 50 14 40 C 14 28 22 16 32 6 Z" fill="url(#essFlame)"/>
+  <!-- Swirling tendrils -->
+  <path d="M 32 16 C 36 24 42 28 42 38 C 42 46 38 50 32 50 C 26 50 22 46 22 38 C 22 30 28 24 32 16 Z" fill="#581c87"/>
+  <circle cx="32" cy="38" r="7" fill="#c084fc"/>
+  <circle cx="32" cy="38" r="3" fill="#ffffff"/>
+  <!-- Spectral eyes in essence -->
+  <ellipse cx="29" cy="36" rx="2" ry="1" fill="#00f0ff"/>
+  <ellipse cx="35" cy="36" rx="2" ry="1" fill="#00f0ff"/>
+</svg>

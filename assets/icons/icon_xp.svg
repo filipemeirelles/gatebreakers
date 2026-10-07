@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="xpCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </radialGradient>
+    <linearGradient id="xpFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0369a1"/>
+      <stop offset="60%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="28" fill="#081524"/>
+  <!-- Mana flame flame -->
+  <path d="M 32 8 C 38 18 48 24 48 38 C 48 48 40 56 32 56 C 24 56 16 48 16 38 C 16 26 26 18 32 8 Z" fill="url(#xpFlame)"/>
+  <!-- Inner core flame -->
+  <path d="M 32 20 C 35 26 40 30 40 38 C 40 44 36 48 32 48 C 28 48 24 44 24 38 C 24 30 29 26 32 20 Z" fill="#ffffff" opacity="0.85"/>
+  <circle cx="32" cy="38" r="6" fill="#00f0ff"/>
+</svg>

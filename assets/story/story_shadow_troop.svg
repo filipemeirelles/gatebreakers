@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 320" width="512" height="320">
+  <defs>
+    <radialGradient id="stBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#3b0764"/>
+      <stop offset="50%" stop-color="#1e0538"/>
+      <stop offset="100%" stop-color="#06010d"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="320" rx="20" fill="url(#stBg)"/>
+
+  <!-- Rising Shadow Mist Ground -->
+  <path d="M 0 320 Q 120 220 256 240 Q 380 220 512 320 Z" fill="#2e1065"/>
+  <path d="M 0 320 Q 160 260 256 270 Q 360 260 512 320 Z" fill="#581c87" opacity="0.6"/>
+
+  <!-- Shadow Army Silhouettes in Background -->
+  <!-- Left Soldiers -->
+  <path d="M 70 300 L 90 200 L 110 200 L 130 300 Z" fill="#0d041a"/>
+  <circle cx="100" cy="185" r="16" fill="#0d041a"/>
+  <ellipse cx="96" cy="185" rx="3" ry="1.5" fill="#00f0ff"/>
+  <ellipse cx="104" cy="185" rx="3" ry="1.5" fill="#00f0ff"/>
+
+  <path d="M 140 310 L 160 220 L 180 220 L 200 310 Z" fill="#120524"/>
+  <circle cx="170" cy="205" r="14" fill="#120524"/>
+  <ellipse cx="166" cy="205" rx="3" ry="1.5" fill="#00f0ff"/>
+  <ellipse cx="174" cy="205" rx="3" ry="1.5" fill="#00f0ff"/>
+
+  <!-- Right Soldiers -->
+  <path d="M 310 310 L 330 220 L 350 220 L 370 310 Z" fill="#120524"/>
+  <circle cx="340" cy="205" r="14" fill="#120524"/>
+  <ellipse cx="336" cy="205" rx="3" ry="1.5" fill="#00f0ff"/>
+  <ellipse cx="344" cy="205" rx="3" ry="1.5" fill="#00f0ff"/>
+
+  <path d="M 380 300 L 400 200 L 420 200 L 440 300 Z" fill="#0d041a"/>
+  <circle cx="410" cy="185" r="16" fill="#0d041a"/>
+  <ellipse cx="406" cy="185" rx="3" ry="1.5" fill="#00f0ff"/>
+  <ellipse cx="414" cy="185" rx="3" ry="1.5" fill="#00f0ff"/>
+
+  <!-- JINWOO CENTER FIGURE -->
+  <!-- Long dark Monarch Coat -->
+  <path d="M 220 320 L 236 150 L 276 150 L 292 320 Z" fill="#030712"/>
+  <circle cx="256" cy="120" r="22" fill="#030712"/>
+  <!-- Glowing Monarch Eyes -->
+  <ellipse cx="250" cy="120" rx="4" ry="2" fill="#00f0ff"/>
+  <ellipse cx="262" cy="120" rx="4" ry="2" fill="#00f0ff"/>
+  <!-- Eye flames -->
+  <path d="M 248 120 Q 230 110 220 95" fill="none" stroke="#00f0ff" stroke-width="2.5"/>
+  <path d="M 264 120 Q 282 110 292 95" fill="none" stroke="#00f0ff" stroke-width="2.5"/>
+
+  <!-- Jinwoo's Outstretched Hand commanding the shadows -->
+  <path d="M 276 160 L 320 180" stroke="#030712" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="325" cy="182" r="8" fill="#00f0ff" opacity="0.6"/>
+
+  <!-- Top Banner "ERGA-SE" -->
+  <text x="256" y="60" fill="#a855f7" font-family="sans-serif" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="8">ERGA-SE</text>
+  <text x="256" y="85" fill="#38bdf8" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="2">A TROPA DE SOMBRAS DESPERTOU</text>
+</svg>

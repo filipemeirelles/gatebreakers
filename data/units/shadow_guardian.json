@@ -1,0 +1,12 @@
+{
+  "id": "shadow_guardian",
+  "display_name": "Sombra Guardiã",
+  "role": "tank",
+  "uses_hunter_xp": false,
+  "base_hp": 120,
+  "base_attack": 12,
+  "base_defense": 14,
+  "base_speed": 5,
+  "art": "res://assets/placeholders/unit_shadow_guardian.svg",
+  "unlock": { "type": "gate_cleared", "gate": 4 }
+}

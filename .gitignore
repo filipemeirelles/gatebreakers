@@ -1,0 +1,26 @@
+# Godot 4+ cache
+.godot/
+
+# Godot translation imports
+*.translation
+
+# Godot mono/.NET
+.mono/
+data_*/
+mono_crash.*.json
+
+# Export output
+build/
+*.apk
+*.aab
+
+# Export presets (contém caminhos locais; recriar por máquina)
+export_presets.cfg
+
+# Ambiente local
+.env
+*.tmp
+
+# Sistema
+.DS_Store
+Thumbs.db

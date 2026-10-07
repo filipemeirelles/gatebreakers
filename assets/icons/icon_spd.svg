@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="spdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="10" fill="#061824"/>
+  <!-- Winged swiftness icon / Lightning bolt -->
+  <polygon points="26,6 12,24 22,24 18,42 36,20 26,20" fill="url(#spdGrad)" stroke="#bae6fd" stroke-width="1.5"/>
+</svg>

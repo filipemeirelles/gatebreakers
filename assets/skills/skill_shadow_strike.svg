@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="20" fill="#0d061c"/>
+  <rect x="4" y="4" width="120" height="120" rx="16" fill="none" stroke="#9333ea" stroke-width="2.5"/>
+  <!-- Downward Shadow Blade Strike -->
+  <path d="M 24 24 L 104 104" stroke="#c084fc" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 28 20 L 108 100" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 14 44 Q 54 84 94 124" fill="none" stroke="#7e22ce" stroke-width="3" opacity="0.6"/>
+  <!-- Violet sparks -->
+  <polygon points="64,64 54,60 64,56 74,60" fill="#a855f7"/>
+  <circle cx="80" cy="80" r="3" fill="#ffffff"/>
+</svg>

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="jwBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="60%" stop-color="#0a0a16"/>
+      <stop offset="100%" stop-color="#030308"/>
+    </radialGradient>
+    <linearGradient id="jwHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#020617"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="jwSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa"/>
+      <stop offset="70%" stop-color="#fdba74"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="jwCoat" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="50%" stop-color="#020617"/>
+      <stop offset="100%" stop-color="#0c1a2e"/>
+    </linearGradient>
+    <radialGradient id="blueEyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="256" height="256" rx="28" fill="url(#jwBg)" />
+  <!-- Border with glowing cyan accent -->
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#1e293b" stroke-width="4"/>
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.6"/>
+
+  <!-- Shadow Monarch Mana Aura -->
+  <path d="M 40 256 Q 30 140 70 80 Q 128 30 186 80 Q 226 140 216 256 Z" fill="#1e1b4b" opacity="0.6"/>
+  <path d="M 60 256 Q 50 160 85 100 Q 128 60 171 100 Q 206 160 196 256 Z" fill="#00f0ff" opacity="0.15"/>
+
+  <!-- High collar Coat & Shoulders -->
+  <path d="M 28 256 L 68 180 L 100 170 L 128 190 L 156 170 L 188 180 L 228 256 Z" fill="url(#jwCoat)"/>
+  <!-- Coat collar wings -->
+  <polygon points="76,180 96,128 116,170" fill="#0f172a" stroke="#00f0ff" stroke-width="1.5"/>
+  <polygon points="180,180 160,128 140,170" fill="#0f172a" stroke="#00f0ff" stroke-width="1.5"/>
+  <!-- Inner shirt -->
+  <polygon points="116,170 128,210 140,170 128,155" fill="#020617"/>
+
+  <!-- Neck & Face -->
+  <polygon points="118,145 128,175 138,145" fill="#ea580c" opacity="0.6"/>
+  <!-- Jawline & Face -->
+  <polygon points="98,95 158,95 154,130 128,162 102,130" fill="url(#jwSkin)"/>
+
+  <!-- Mouth & Nose -->
+  <line x1="124" y1="140" x2="134" y2="139" stroke="#9a3412" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="126,124 128,128 124,129" fill="#9a3412"/>
+
+  <!-- EYES - Piercing glowing blue Monarch Eyes -->
+  <polygon points="106,110 118,114 110,116" fill="#0f172a"/>
+  <polygon points="150,110 138,114 146,116" fill="#0f172a"/>
+  <!-- Glowing Iris -->
+  <ellipse cx="112" cy="113" rx="5" ry="2.5" fill="#00f0ff"/>
+  <ellipse cx="144" cy="113" rx="5" ry="2.5" fill="#00f0ff"/>
+  <circle cx="112" cy="113" r="1.5" fill="#ffffff"/>
+  <circle cx="144" cy="113" r="1.5" fill="#ffffff"/>
+  <!-- Blue Eye Flame Trail -->
+  <path d="M 108 113 Q 86 105 76 90" fill="none" stroke="#00f0ff" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 148 113 Q 170 105 180 90" fill="none" stroke="#00f0ff" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Sharp Black Hair with Spikes -->
+  <path d="M 90 95 C 80 60 110 40 128 40 C 146 40 176 60 166 95 L 176 80 L 160 62 L 178 52 L 148 34 L 132 24 L 118 36 L 90 48 L 102 65 L 82 82 Z" fill="url(#jwHair)"/>
+  <!-- Hair bangs over forehead -->
+  <polygon points="98,90 110,112 116,92" fill="#090d16"/>
+  <polygon points="118,88 126,118 132,88" fill="#020617"/>
+  <polygon points="138,88 144,110 156,92" fill="#090d16"/>
+  <!-- Hair sheen -->
+  <path d="M 112 48 Q 128 42 144 48" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.6"/>
+
+  <!-- Dagger Hilt in Foreground -->
+  <g transform="translate(160, 160) rotate(-25)">
+    <rect x="0" y="0" width="10" height="70" rx="3" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+    <circle cx="5" cy="72" r="7" fill="#0284c7"/>
+    <rect x="-8" y="-4" width="26" height="8" rx="2" fill="#38bdf8"/>
+    <polygon points="-4,-4 5,-40 14,-4" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+  </g>
+
+  <!-- Title Badge Label -->
+  <rect x="36" y="214" width="184" height="28" rx="8" fill="#0a0f1d" stroke="#00f0ff" stroke-width="1.5"/>
+  <text x="128" y="233" fill="#00f0ff" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle" letter-spacing="1.5">SUNG JINWOO</text>
+</svg>

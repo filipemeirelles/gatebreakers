@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="ecBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="65%" stop-color="#0c0a09"/>
+      <stop offset="100%" stop-color="#030303"/>
+    </radialGradient>
+    <linearGradient id="ecSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4d7c0f"/>
+      <stop offset="60%" stop-color="#365314"/>
+      <stop offset="100%" stop-color="#1a2e05"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="28" fill="url(#ecBg)" />
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#84cc16" stroke-width="2" opacity="0.6"/>
+
+  <!-- Beastly Goblin Head & Horns -->
+  <!-- Long pointed ears -->
+  <polygon points="80,110 20,80 70,140" fill="#365314" stroke="#84cc16" stroke-width="1.5"/>
+  <polygon points="176,110 236,80 186,140" fill="#365314" stroke="#84cc16" stroke-width="1.5"/>
+
+  <!-- Face -->
+  <path d="M 70 100 C 60 60 196 60 186 100 C 190 150 160 190 128 190 C 96 190 66 150 70 100 Z" fill="url(#ecSkin)"/>
+
+  <!-- Jagged Horns -->
+  <path d="M 90 70 Q 70 30 96 24 Q 106 50 100 70" fill="#292524" stroke="#78716c" stroke-width="1.5"/>
+  <path d="M 166 70 Q 186 30 160 24 Q 150 50 156 70" fill="#292524" stroke="#78716c" stroke-width="1.5"/>
+
+  <!-- Savage Glowing Red Eyes -->
+  <circle cx="104" cy="110" r="10" fill="#ef4444"/>
+  <circle cx="152" cy="110" r="10" fill="#ef4444"/>
+  <circle cx="104" cy="110" r="4" fill="#fef08a"/>
+  <circle cx="152" cy="110" r="4" fill="#fef08a"/>
+
+  <!-- Fangs & Snarl -->
+  <path d="M 104 150 Q 128 165 152 150" fill="none" stroke="#1c1917" stroke-width="3"/>
+  <polygon points="112,150 116,165 120,150" fill="#f5f5f4"/>
+  <polygon points="136,150 140,165 144,150" fill="#f5f5f4"/>
+
+  <!-- Title Badge Label -->
+  <rect x="36" y="214" width="184" height="28" rx="8" fill="#141c0e" stroke="#84cc16" stroke-width="1.5"/>
+  <text x="128" y="233" fill="#a3e635" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="1">MONSTRO DO PORTAL</text>
+</svg>

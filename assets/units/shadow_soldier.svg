@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="ssBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2e1065"/>
+      <stop offset="65%" stop-color="#0f0728"/>
+      <stop offset="100%" stop-color="#05020c"/>
+    </radialGradient>
+    <linearGradient id="ssArmor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e113a"/>
+      <stop offset="50%" stop-color="#0d071a"/>
+      <stop offset="100%" stop-color="#05020a"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="28" fill="url(#ssBg)" />
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="none" stroke="#7e22ce" stroke-width="3" opacity="0.7"/>
+
+  <!-- Shadow Mist Aura -->
+  <path d="M 30 256 Q 20 150 60 90 Q 128 40 196 90 Q 236 150 226 256 Z" fill="#581c87" opacity="0.4"/>
+  <path d="M 50 256 Q 40 180 80 120 Q 128 70 176 120 Q 216 180 206 256 Z" fill="#9333ea" opacity="0.2"/>
+
+  <!-- Heavy Armored Shoulders -->
+  <path d="M 32 256 L 64 190 L 104 180 L 128 200 L 152 180 L 192 190 L 224 256 Z" fill="url(#ssArmor)"/>
+  <!-- Pauldron Spikes -->
+  <polygon points="54,190 40,160 70,175" fill="#3b0764" stroke="#a855f7" stroke-width="1.5"/>
+  <polygon points="202,190 216,160 186,175" fill="#3b0764" stroke="#a855f7" stroke-width="1.5"/>
+
+  <!-- Shadow Knight Helmet -->
+  <path d="M 88 150 L 80 90 L 104 50 L 128 32 L 152 50 L 176 90 L 168 150 L 128 175 Z" fill="url(#ssArmor)" stroke="#7e22ce" stroke-width="2"/>
+  <!-- Helmet Horns -->
+  <path d="M 96 64 L 64 36 L 90 46" fill="#1e113a" stroke="#a855f7" stroke-width="2"/>
+  <path d="M 160 64 L 192 36 L 166 46" fill="#1e113a" stroke="#a855f7" stroke-width="2"/>
+
+  <!-- Visor Slit -->
+  <polygon points="96,112 160,112 154,124 128,128 102,124" fill="#000000"/>
+  <!-- Glowing Blue Shadow Eyes inside Helmet -->
+  <ellipse cx="114" cy="118" rx="8" ry="3" fill="#00f0ff"/>
+  <ellipse cx="142" cy="118" rx="8" ry="3" fill="#00f0ff"/>
+  <circle cx="114" cy="118" r="2" fill="#ffffff"/>
+  <circle cx="142" cy="118" r="2" fill="#ffffff"/>
+
+  <!-- Eye mist flares -->
+  <path d="M 108 118 Q 80 114 68 100" fill="none" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 148 118 Q 176 114 188 100" fill="none" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Broadsword behind back -->
+  <polygon points="124,10 132,10 134,70 122,70" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Title Badge Label -->
+  <rect x="32" y="214" width="192" height="28" rx="8" fill="#100720" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="128" y="233" fill="#c084fc" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="1">SOLDADO DAS SOMBRAS</text>
+</svg>
