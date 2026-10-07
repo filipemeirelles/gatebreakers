@@ -2,7 +2,7 @@
 
 **Data:** 06/10/2026
 
-**Build exportado:** `0.3.0` (Android versionCode 3), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+**Build instalado:** `0.3.0` (Android versionCode 3), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
 
 **Dispositivo:** `RXCT301TRHY`, Android 16 / API 36, 1080×2340, orientação retrato
 
@@ -12,16 +12,16 @@
 - Cobertura nova: reprodução do time salvo no Portal 7, invariantes vivo/morto, distinção #1/#2 e alvo automático, farm com vitória/derrota/pausa, migração de save v1→v2, baús AFK, guardrail de poder, recompensa ordenada e red dots.
 - Smoke headless (`--quit-after 120`): exit 0.
 - Export Android: exit 0. `aapt` conferiu `com.gatebreakers.prototype`, `versionName=0.3.0`, `versionCode=3`.
-- **Sem instalação/teste no celular nesta sessão**, conforme pedido de Filipe; o save do aparelho não foi acessado nem alterado.
+- `adb install -r` e abertura via launcher: sucesso; processo permaneceu ativo.
+- O save v1 migrou para schema v2, preservando formação e progresso; não houve reset. No smoke interativo, o save continuou válido e avançou para o Portal 7 com baús resgatados.
+- Logcat do processo: sem `SCRIPT ERROR`, `FATAL EXCEPTION` ou erro de runtime Godot.
 
-## Teste manual reservado para amanhã
+## Verificação manual complementar
 
-- Exportar/instalar o APK v0.3 com `adb install -r` e conferir versão/save preservado.
-- Reproduzir batalha do Portal 7 com equipe atual; observar HP do último inimigo, alvo #1/#2 e morte em HP zero.
-- Testar auto-farm: vitória avança e paga; derrota interrompe; segundo plano interrompe; batalha manual continua disponível.
-- Deixar o Baú do Sistema acumular, resgatar marco, verificar red dot e persistência após reabrir.
-- Verificar confirmação de risco alto, red dots de melhorias e layout/áreas seguras.
+- Observar uma batalha completa do Portal 7: alvo #1/#2, HP do último inimigo e morte em HP zero.
+- Testar na interface o toggle do auto-farm, parada por derrota/segundo plano e retorno à batalha manual.
+- Conferir visualmente o Baú do Sistema, aviso de poder, badges, áreas seguras e notch.
 - Medir FPS em batalha ativa para a meta de 30 FPS; o reset fica fora do teste para preservar o save.
 - Áudio/vibração continuam adiados; a arte atual ainda é SVG de protótipo.
 
-O build v0.3 está em `build/gatebreakers-debug.apk`, pronto para instalar amanhã quando Filipe reconectar o telefone.
+O APK v0.3 está instalado e aberto. Os testes headless cobrem as regras; a inspeção visual detalhada fica para a próxima sessão com o telefone em mãos.

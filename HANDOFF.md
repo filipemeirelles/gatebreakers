@@ -61,7 +61,7 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Validação local (06/10/2026): `=== RESULTADO: 281 passaram, 0 falharam ===`, exit 0.** Inclui reprodução determinística do portal 7, invariantes vivo/morto, baixa vida visual, farm, migração schema v2, baús, power guard e red dots. Smoke e export também passaram; APK `0.3.0`/`versionCode=3` conferido por `aapt`. O aparelho não foi usado nesta sessão por decisão do proprietário.
+**Validação (06/10/2026): `=== RESULTADO: 281 passaram, 0 falharam ===`, exit 0.** Inclui reprodução determinística do portal 7, invariantes vivo/morto, baixa vida visual, farm, migração schema v2, baús, power guard e red dots. Smoke e export passaram; APK `0.3.0`/`versionCode=3` foi conferido por `aapt`, instalado com `adb install -r` e aberto no aparelho. O save v1 migrou sem reset; o smoke interativo resgatou baús e avançou para o Portal 7. Logcat sem erros de script Godot.
 
 Suites (8): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
@@ -77,7 +77,7 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 4 Melhorias e sombras | concluída | testes melhorias verdes (migração de save incluída); verificado no aparelho |
 | 5 Cartões, configurações, acessibilidade e validação Android | concluída | testes e instalação no aparelho confirmados |
 | 6 Visual e gamefeel v0.2 | primeira entrega concluída | retratos SVG por onda, cenário de batalha, animações de golpes/dano, ícones e tema; suíte 238/238; Filipe confirmou teste visual positivo |
-| 7 Ciclo PML v0.3 | implementação e build concluídos; teste físico pendente | auto-limpeza foreground, baús AFK, power guard, red dots; schema v2 migra saves v1; suíte 281/281, smoke/export verdes |
+| 7 Ciclo PML v0.3 | implementação, build e smoke Android concluídos | auto-limpeza foreground, baús AFK, power guard, red dots; schema v2 migra saves v1; suíte 281/281; inspeção visual/interativa complementar pendente |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
@@ -108,4 +108,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: amanhã instalar `build/gatebreakers-debug.apk` com `adb install -r` (preserva o save) e testar no aparelho: auto-farm vitória/derrota/segundo plano, baú AFK, aviso de poder, red dots e monstro com pouca vida. Não usar “Repor progresso”. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.
+Próximo passo: completar a validação visual/interativa no aparelho: auto-farm vitória/derrota/segundo plano, aviso de poder, alvo com pouca vida, FPS e áreas seguras. A instalação v0.3 migrou o save e a sessão ficou sem erros de script; não usar “Repor progresso”. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.
