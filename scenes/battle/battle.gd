@@ -384,11 +384,11 @@ func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool) -> void
 	popup.size = Vector2(120, 44)
 	var canvas_transform := fx_layer.get_global_transform_with_canvas()
 	var center: Vector2 = canvas_transform.affine_inverse() * portrait.get_global_rect().get_center()
-	popup.position = center - Vector2(popup.size.x * 0.5, popup.size.y)
+	popup.position = center - Vector2(popup.size.x * 0.5, popup.size.y * 0.35)
 	fx_layer.add_child(popup)
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(popup, "position:y", popup.position.y - 74.0, 0.48)
+	tween.tween_property(popup, "position:y", popup.position.y - 58.0, 0.48)
 	tween.tween_property(popup, "modulate:a", 0.0, 0.48)
 	tween.chain().tween_callback(popup.queue_free)
 

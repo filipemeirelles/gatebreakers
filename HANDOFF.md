@@ -77,7 +77,7 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 4 Melhorias e sombras | concluída | testes melhorias verdes (migração de save incluída); verificado no aparelho |
 | 5 Cartões, configurações, acessibilidade e validação Android | concluída | testes e instalação no aparelho confirmados |
 | 6 Visual e gamefeel v0.2 | primeira entrega concluída | retratos SVG por onda, cenário de batalha, animações de golpes/dano, ícones e tema; suíte 238/238; Filipe confirmou teste visual positivo |
-| 7 Ciclo PML v0.3 | implementação, build e smoke Android concluídos | auto-limpeza foreground, baús AFK, power guard, red dots; schema v2 migra saves v1; suíte 281/281; inspeção visual/interativa complementar pendente |
+| 7 Ciclo PML v0.3 | implementação e teste de smoke no Android concluídos | auto-farm parou na derrota no Portal 8; baús resgatados; batalha mostrou morto em 0 HP e alvo vivo destacado; suíte 281/281 |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
@@ -108,4 +108,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: completar a validação visual/interativa no aparelho: auto-farm vitória/derrota/segundo plano, aviso de poder, alvo com pouca vida, FPS e áreas seguras. A instalação v0.3 migrou o save e a sessão ficou sem erros de script; não usar “Repor progresso”. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.
+Próximo passo: playtest prolongado de equilíbrio do auto-farm e medir FPS durante batalha. O smoke migrou o save e cobriu resgate de baús, Portal 7 e derrota no Portal 8 sem reset. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.
