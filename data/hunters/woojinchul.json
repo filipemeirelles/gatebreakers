@@ -1,0 +1,1 @@
+{"id": "woojinchul", "display_name": "Woo Jinchul", "rank": "A", "role": "fighter", "base_hp": 110, "base_attack": 24, "base_defense": 12, "base_speed": 10, "art": "res://assets/hunters/woojinchul.png", "skill_id": "jinchul_capture", "contract": {"type": "gate_and_gold", "gate": 7, "gold": 3000}}

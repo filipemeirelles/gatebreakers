@@ -36,3 +36,5 @@ func _run_all() -> void:
 	IdleRewardTests.run(self)
 	UpgradeTests.run(self)
 	Fase5Tests.run(self)
+	SkillTests.run(self)
+	HunterTests.run(self)

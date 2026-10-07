@@ -9,6 +9,7 @@ const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var result_portrait: TextureRect = $Margin/VBox/ResultPortrait
 @onready var rewards_label: Label = $Margin/VBox/RewardsLabel
+@onready var items_label: Label = $Margin/VBox/ItemsLabel
 @onready var reward_strip: HBoxContainer = $Margin/VBox/RewardStrip
 @onready var gold_amount: Label = $Margin/VBox/RewardStrip/GoldReward/GoldAmount
 @onready var xp_amount: Label = $Margin/VBox/RewardStrip/XpReward/XpAmount
@@ -51,6 +52,9 @@ func configure(data: Dictionary) -> void:
 	)
 
 	if victory:
+		# Itens ganhos: área reservada (inventário é uma fase futura aprovada).
+		items_label.text = Loc.t("result.items")
+		items_label.visible = true
 		var rewards: Dictionary = data.get("rewards", {})
 		gold_amount.text = "+%d" % int(rewards.get("gold", 0))
 		xp_amount.text = "+%d" % int(rewards.get("xp", 0))
@@ -68,6 +72,7 @@ func configure(data: Dictionary) -> void:
 	else:
 		rewards_label.text = Loc.t("result.no_reward")
 		reward_strip.visible = false
+		items_label.visible = false
 
 	var unlocks: Array = []
 	if bool(data.get("advanced", false)):

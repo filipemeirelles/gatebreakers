@@ -2,12 +2,21 @@ class_name CombatService
 extends RefCounted
 ## Resolução determinística de ondas/combates (spec §4 — Combate).
 ##
-## Regras documentadas (testáveis em tests/test_combat_service.gd):
+## Regras documentadas (testáveis em tests/test_combat_service.gd e test_skills.gd):
 ## - Ordem de ação: velocidade decrescente. Empates: aliados antes de inimigos;
 ##   entre aliados, a posição na formação; entre inimigos, a posição na onda.
-## - Alvo do aliado: primeiro inimigo vivo na ordem da onda.
-## - Alvo do inimigo: primeiro aliado vivo na ordem da formação.
+## - Alvo básico do aliado: primeiro inimigo vivo na ordem da onda.
+## - Exceção: Tiro na Retaguarda atinge o ÚLTIMO inimigo vivo da onda.
+## - Alvo básico do inimigo: primeiro aliado vivo na ordem da formação.
+## - Exceção: Postura de Guarda ativa redireciona inimigos para o guardião
+##   (se vivo) do resto da rodada atual até o fim da próxima, com redução
+##   de dano configurada; expira ao trocar de onda.
 ## - Dano: max(1, ataque - floor(defesa / 2)). Sem crítico, esquiva ou RNG.
+## - Habilidade de dano: floor(dano_básico * multiplicador), mínimo 1.
+## - Recarga: contada em ações PRÓPRIAS da unidade (a cada N ações usa a
+##   habilidade em vez do básico); contadores persistem entre ondas do portal
+##   e são transientes de batalha (não entram no save). Guarda expira no fim
+##   da onda. Ordem de ação inalterada: habilidade substitui o básico no turno.
 ## - Cada unidade viva ataca uma vez por rodada.
 ## - Aliados mantêm HP entre ondas do mesmo portal.
 ## - A velocidade x1/x2 só altera a apresentação; esta classe não vê tempo.
@@ -26,11 +35,16 @@ static func start_battle(allies: Array, gate_def: Dictionary) -> Dictionary:
 		"action_queue": [],
 		"phase": "running",
 		"defeated_enemies": 0,
+		"guard_ally_id": "",
+		"guard_from_round": -1,
+		"guard_until_round": -1,
 	}
 	for unit in allies:
 		var ally := _clone_unit(unit)
 		ally["side"] = "ally"
 		ally["max_hp"] = int(ally["hp"])
+		ally["skill_id"] = str(ally.get("skill_id", ""))
+		ally["skill_clock"] = 0
 		state["allies"].append(ally)
 	_load_wave(state)
 	return state
@@ -51,7 +65,49 @@ static func step(state: Dictionary) -> Dictionary:
 		var actor := _pop_live_actor(state)
 		if actor.is_empty():
 			continue
-		var target := _pick_target(state, actor)
+		# Habilidade automática e determinística: na N-ésima ação própria,
+		# a unidade usa a habilidade em vez do ataque básico.
+		var skill_id := str(actor.get("skill_id", ""))
+		var use_skill := _should_use_skill(state, actor, skill_id)
+		if use_skill and BalanceConfig.skill_target(skill_id) == "self_guard":
+			actor["skill_clock"] = 0
+			state["guard_ally_id"] = str(actor.get("id", ""))
+			state["guard_from_round"] = int(state["round"])
+			state["guard_until_round"] = int(state["round"]) + 1
+			state["guard_skill_id"] = skill_id
+			return {
+				"type": "skill",
+				"skill_id": skill_id,
+				"attacker": _unit_summary(actor),
+				"target": _unit_summary(actor),
+				"damage": 0,
+				"killed": false,
+				"guard": true,
+				"outcome": "",
+				"wave": int(state["wave_index"]) + 1, "round": int(state["round"]),
+			}
+		# Habilidade de cura: alvo = aliado vivo com menos HP (nunca inimigos).
+		if use_skill and BalanceConfig.skill_target(skill_id) == "ally_heal":
+			var healed := _pick_weakest_ally(state, actor)
+			actor["skill_clock"] = 0
+			if healed.is_empty():
+				# Ninguém ferido: a cura vira um ataque básico (determinismo).
+				use_skill = false
+			else:
+				var amount := BalanceConfig.skill_heal_amount(skill_id, int(healed["max_hp"]))
+				healed["hp"] = mini(int(healed["hp"]) + amount, int(healed["max_hp"]))
+				return {
+					"type": "skill",
+					"skill_id": skill_id,
+					"attacker": _unit_summary(actor),
+					"target": _unit_summary(healed),
+					"damage": -amount,
+					"killed": false,
+					"heal": true,
+					"outcome": "",
+					"wave": int(state["wave_index"]) + 1, "round": int(state["round"]),
+				}
+		var target := _pick_target(state, actor, skill_id if use_skill else "")
 		if target.is_empty():
 			var outcome_no_target := _advance_wave_or_finish(state)
 			return {
@@ -59,6 +115,18 @@ static func step(state: Dictionary) -> Dictionary:
 				"wave": int(state["wave_index"]) + 1, "round": int(state["round"]),
 			}
 		var damage: int = BalanceConfig.basic_damage(int(actor["attack"]), int(target["defense"]))
+		if use_skill:
+			actor["skill_clock"] = 0
+			var mult := BalanceConfig.skill_damage_multiplier(skill_id)
+			damage = maxi(1, int(floor(float(damage) * mult)))
+		else:
+			actor["skill_clock"] = int(actor.get("skill_clock", 0)) + 1
+		# Guarda ativa reduz o dano sofrido pelo guardião até o fim da rodada.
+		if _is_guard_active(state, target):
+			var factor := BalanceConfig.skill_guard_damage_factor(str(state.get("guard_skill_id", "guardian_stance")))
+			if factor <= 0.0 or factor > 1.0:
+				factor = 0.75
+			damage = maxi(1, int(floor(float(damage) * factor)))
 		target["hp"] = maxi(int(target["hp"]) - damage, 0)
 		var killed := int(target["hp"]) == 0
 		if killed and String(target["side"]) == "enemy":
@@ -79,6 +147,8 @@ static func step(state: Dictionary) -> Dictionary:
 			"outcome": outcome,
 			"wave": int(state["wave_index"]) + 1,
 			"round": int(state["round"]),
+			"is_skill": use_skill,
+			"skill_id": skill_id if use_skill else "",
 		}
 	return {}
 
@@ -130,6 +200,11 @@ static func _load_wave(state: Dictionary) -> void:
 	state["enemies"] = enemies
 	# Fila da onda anterior é inválida: nova onda começa com rodada nova.
 	state["action_queue"] = []
+	# A guarda é tática de onda: não vaza para a onda seguinte.
+	state["guard_ally_id"] = ""
+	state["guard_from_round"] = -1
+	state["guard_until_round"] = -1
+	state["guard_skill_id"] = ""
 
 
 static func _build_action_order(state: Dictionary) -> Array:
@@ -176,12 +251,77 @@ static func _unit_by_ref(state: Dictionary, ref: Dictionary) -> Dictionary:
 	return side[idx]
 
 
-static func _pick_target(state: Dictionary, actor: Dictionary) -> Dictionary:
-	var candidates: Array = state["enemies"] if String(actor["side"]) == "ally" else state["allies"]
-	for unit in candidates:
+static func _pick_target(state: Dictionary, actor: Dictionary, skill_id: String = "") -> Dictionary:
+	if String(actor["side"]) == "ally":
+		# Tiro na Retaguarda: último vivo em vez do primeiro.
+		if skill_id != "" and BalanceConfig.skill_target(skill_id) == "last":
+			var last: Dictionary = {}
+			for unit in state["enemies"]:
+				if int(unit["hp"]) > 0:
+					last = unit
+			return last
+		for unit in state["enemies"]:
+			if int(unit["hp"]) > 0:
+				return unit
+		return {}
+	# Inimigos respeitam a guarda ativa: miram o guardião se vivo.
+	if _is_guard_active(state, {}):
+		for unit in state["allies"]:
+			if str(unit.get("id", "")) == str(state.get("guard_ally_id", "")) and int(unit["hp"]) > 0:
+				return unit
+	for unit in state["allies"]:
 		if int(unit["hp"]) > 0:
 			return unit
 	return {}
+
+
+## Recarga determinística por ações próprias: a habilidade dispara na
+## N-ésima ação da unidade. Puro (sem efeito colateral); o incremento e o
+## reset acontecem no step(). Inimigos e unidades sem skill: sempre false.
+static func _should_use_skill(state: Dictionary, actor: Dictionary, skill_id: String) -> bool:
+	if String(actor.get("side", "")) != "ally" or skill_id.is_empty():
+		return false
+	var cooldown := BalanceConfig.skill_cooldown_actions(skill_id)
+	if cooldown <= 0:
+		return false
+	return int(actor.get("skill_clock", 0)) + 1 >= cooldown
+
+
+## Aliado vivo mais ferido (fator de cura): primeiro da formação em empate,
+## nunca o próprio ator (curador não se cura nesta versão).
+static func _pick_weakest_ally(state: Dictionary, actor: Dictionary) -> Dictionary:
+	var weakest: Dictionary = {}
+	for unit in state["allies"]:
+		if int(unit["hp"]) <= 0 or str(unit.get("id", "")) == str(actor.get("id", "")):
+			continue
+		if int(unit["hp"]) >= int(unit["max_hp"]):
+			continue
+		if weakest.is_empty() or int(unit["hp"]) < int(weakest["hp"]):
+			weakest = unit
+	return weakest
+
+
+## Guarda ativa se: há guardião designado, vivo, dentro da janela
+## [from_round, until_round] (resto da rodada atual + próxima completa).
+## O segundo parâmetro (alvo) é opcional: quando informado, verifica se o
+## alvo É o guardião protegido (para a redução de dano).
+static func _is_guard_active(state: Dictionary, target: Dictionary) -> bool:
+	var guard_id := str(state.get("guard_ally_id", ""))
+	if guard_id.is_empty():
+		return false
+	var round := int(state.get("round", -2))
+	if round < int(state.get("guard_from_round", -1)) or round > int(state.get("guard_until_round", -1)):
+		return false
+	var guardian: Dictionary = {}
+	for unit in state["allies"]:
+		if str(unit.get("id", "")) == guard_id and int(unit["hp"]) > 0:
+			guardian = unit
+			break
+	if guardian.is_empty():
+		return false
+	if target.is_empty():
+		return true
+	return str(target.get("id", "")) == guard_id
 
 
 static func _advance_wave_or_finish(state: Dictionary) -> String:

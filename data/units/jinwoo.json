@@ -7,6 +7,7 @@
   "base_attack": 20,
   "base_defense": 6,
   "base_speed": 10,
-  "art": "res://assets/units/jinwoo.svg",
+  "art": "res://assets/units/jinwoo.png",
+  "skill_id": "jinwoo_focused",
   "unlock": { "type": "start" }
 }

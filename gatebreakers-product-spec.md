@@ -81,8 +81,8 @@ O jogador quer sentir progresso mesmo em sessões breves: deixar a equipe avanç
 ### Conteúdo jogável
 
 - Protagonista: Sung Jinwoo.
-- Equipe inicial: Jinwoo nível 1 e um Shadow Soldier genérico nível 1. Vencer o portal 2 desbloqueia um Shadow Soldier de longo alcance; vencer o portal 4 desbloqueia um Shadow Soldier guardião; vencer o chefe do portal 5 desbloqueia Igris. Jinwoo mais no máximo três sombras podem entrar na formação.
-- Dez portais de teste, cada um com três ondas; o portal 5 e o portal 10 encerram com um chefe. A duração e os valores de balanceamento ficam configuráveis, não codificados nas telas.
+- Equipe inicial: Jinwoo nível 1 e um Shadow Soldier genérico nível 1. A Provação de Mudança de Classe (portal 4) desbloqueia Igris; o Portão Vermelho (portal 5) desbloqueia a sombra guardiã; o portão da Hunters Guild (portal 7) desbloqueia a sombra de longo alcance. Jinwoo mais no máximo três sombras podem entrar na formação.
+- Dez portais em uma progressão original inspirada nos arcos de *Solo Leveling*, cada um com três ondas; portais 2–10 encerram com chefes nomeados. A duração e os valores de balanceamento ficam configuráveis, não codificados nas telas.
 - Três cartões narrativos curtos: introdução ao Sistema; primeiro avanço importante; aquisição/desbloqueio da tropa de sombras. O texto deve ser original e resumido, sem copiar falas do anime.
 
 ### Ciclo principal
@@ -120,8 +120,8 @@ O jogador quer sentir progresso mesmo em sessões breves: deixar a equipe avanç
 - Ao subir de nível, recalcular atributos a partir da definição base: HP `base_hp * (1 + 0.10 * (nível - 1))`, ataque `base_attack * (1 + 0.08 * (nível - 1))` e defesa `base_defense * (1 + 0.05 * (nível - 1))`, arredondando para baixo.
 - As sombras usam as mesmas fórmulas de atributos, mas não consomem `hunter_xp`; cada nível exige `gold = 25 * nível_atual` e `shadow_essence = 5 * nível_atual`. Se algum recurso for insuficiente, bloquear a melhoria e mostrar a quantidade faltante.
 - Valores iniciais de balanceamento — sementes de teste, centralizadas em `BalanceConfig` e ajustáveis após playtest: Jinwoo nível 1 `HP=100, ATK=20, DEF=6, SPD=10`; Shadow Soldier nível 1 `HP=80, ATK=15, DEF=8, SPD=8`.
-- Para portal `n` (1 a 10), inimigo comum: `HP=60+20*(n-1)`, `ATK=10+2*(n-1)`, `DEF=2+n`, `SPD=7+floor((n-1)/3)`. Cada onda comum contém dois inimigos. O último combate dos portais 5 e 10 é um chefe único com `HP=4x`, `ATK=1.5x` e `DEF=1.2x` do inimigo comum do portal.
-- Recompensa ao concluir um portal: `gold=10*n` e `hunter_xp=5*n` por inimigo derrotado naquele portal; derrota não concede essas recompensas. O chefe dos portais 5 e 10 também concede `50 shadow_essence`; vencer o chefe do portal 5 desbloqueia Igris automaticamente, sem custo adicional.
+- Para portal `n` (1 a 10), inimigo comum: `HP=60+20*(n-1)`, `ATK=10+2*(n-1)`, `DEF=2+n`, `SPD=7+floor((n-1)/3)`. As duas primeiras ondas contêm dois inimigos; portais 2–10 terminam com um chefe único, escalado por `HP=4x`, `ATK=1.5x` e `DEF=1.2x` do inimigo comum do portal.
+- Recompensa ao concluir um portal: `gold=10*n` e `hunter_xp=5*n` por inimigo derrotado naquele portal; derrota não concede essas recompensas. Para preservar a economia v0.3, apenas os chefes dos portais 5 e 10 concedem `50 shadow_essence`; os novos chefes narrativos não adicionam essência. Os desbloqueios narrativos são definidos pelos dados do portal e da unidade.
 - Taxas AFK iniciais: `gold_per_hour=10*n` e `hunter_xp_per_hour=5*n`, usando o maior portal concluído. Shadow essence não é concedida AFK.
 - Esses números são valores funcionais de partida, não balanceamento final. Nenhuma tela ou script pode duplicá-los: editar apenas `BalanceConfig`/dados de portal.
 - Fórmulas de custo e crescimento ficam em um recurso/configuração de balanceamento central. Evitar valores duplicados em scripts de UI.
@@ -401,3 +401,28 @@ O proprietário confirmou que este primeiro build é um protótipo privado de f�
 
 - Cotas diárias de varredura, marcos de varredura, recompensas pagas, VIP, anúncios, multiplayer e funcionalidades online não fazem parte desta rodada.
 - Áudio e vibração continuam adiados. O teto AFK permanece em 8 horas.
+
+## 15. Adendo aprovado — arte e progressão narrativa v0.4
+
+**Aprovado por Filipe em 07/10/2026.** A direção visual aprovada é arte original de fantasia sombria em acabamento webtoon/manhwa, gerada para este protótipo e recortada para retratos transparentes. Os arquivos integrados ficam em `assets/units/`, `assets/battle/` e `assets/story/`; imagens oficiais, quadros, logos e falas de *Solo Leveling* não devem ser incorporados.
+
+### 15.1 Sequência compacta dos portais
+
+| Portal | Local/arco adaptado | Rank | Chefe | Desbloqueio |
+|---:|---|:---:|---|---|
+| 1 | Masmorra dos Goblins | E | — | Cartão de primeiro avanço |
+| 2 | Estação de Hapjeong / Kasaka | C/D | Kasaka de Presas Venenosas | — |
+| 3 | Masmorra dos Insetos | C | Aranha Gigante Buryura | — |
+| 4 | Provação de Mudança de Classe | A | Igris Vermelho-Sangue | Igris + cartão narrativo |
+| 5 | Portão Vermelho | S | Baruka | Sombra guardiã genérica |
+| 6 | Castelo dos Demônios | S | Cerberus | — |
+| 7 | Portão da Hunters Guild | A | Kargalgan | Sombra de longo alcance genérica |
+| 8 | Portão S da Ilha de Jeju | S | Rei das Formigas (Beru) | — |
+| 9 | Portão S de Tóquio | S | Legia, Monarca do Início | — |
+| 10 | Invasão de Antares | S | Antares, Monarca da Destruição | — |
+
+- É uma adaptação compacta de progressão para o protótipo, não a reprodução completa nem cronológica de todas as temporadas/arcos. Inimigos e chefes usam atributos centralizados existentes; o nome e o rank apresentados vêm de `data/gates/gates.json` e seguem o mapeamento resumido em `reference-solo-leveling.md`.
+- Mantêm-se os IDs, a formação e o schema de save. Os assets aprovados substituem visualmente os retratos SVG em jogo sem apagar os arquivos vetoriais legados. Saves existentes retêm portal, recursos, formação, níveis e unidades já desbloqueadas.
+- A ordem de novos desbloqueios segue os marcos narrativos: Igris no portal 4, guardião no 5 e sombra de longo alcance no 7. A adaptação não cria personagens, unidades ou campos de save adicionais nesta versão.
+- Para não acelerar a economia sem playtest, mantém-se a essência apenas nos chefes dos portais 5 e 10; essa configuração por portal fica em `data/gates/gates.json`.
+- As ilustrações do Sistema, primeiro avanço e aquisição de Igris usam os cartões existentes; o gatilho do terceiro cartão acompanha a conclusão do portal 4.

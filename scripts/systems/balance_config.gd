@@ -110,6 +110,16 @@ static func shadow_essence_cost_to_next_level(current_level: int) -> int:
 	return int(_leveling()["shadow_essence_cost_base_per_level"]) * current_level
 
 
+## Melhoria de caçador contratado: apenas ouro (essência é das sombras).
+static func hunter_gold_cost_to_next_level(current_level: int) -> int:
+	return int(_leveling()["hunter_gold_cost_base_per_level"]) * current_level
+
+
+## Máximo de sombras (invocações) que entram em combate junto da equipe.
+static func summon_cap() -> int:
+	return int(_combat().get("summon_cap", 2))
+
+
 # --- Atributos de unidade por nível ---
 
 static func stats_at_level(base_hp: int, base_attack: int, base_defense: int, base_speed: int, level: int) -> Dictionary:
@@ -135,12 +145,18 @@ static func common_enemy_stats(gate: int) -> Dictionary:
 	}
 
 
-static func boss_enemy_stats(gate: int) -> Dictionary:
+static func boss_enemy_stats(gate: int, boss_hp_multiplier_override: float = 0.0, boss_attack_multiplier_override: float = 0.0) -> Dictionary:
 	var s := _scaling()
 	var stats := common_enemy_stats(gate)
+	var hp_mult := float(s["boss_hp_multiplier"])
+	var atk_mult := float(s["boss_attack_multiplier"])
+	if boss_hp_multiplier_override > 0.0:
+		hp_mult = boss_hp_multiplier_override
+	if boss_attack_multiplier_override > 0.0:
+		atk_mult = boss_attack_multiplier_override
 	return {
-		"hp": int(floor(stats["hp"] * float(s["boss_hp_multiplier"]))),
-		"attack": int(floor(stats["attack"] * float(s["boss_attack_multiplier"]))),
+		"hp": int(floor(stats["hp"] * hp_mult)),
+		"attack": int(floor(stats["attack"] * atk_mult)),
 		"defense": int(floor(stats["defense"] * float(s["boss_defense_multiplier"]))),
 		"speed": stats["speed"],
 	}
@@ -180,6 +196,57 @@ static func combat_power(stats: Dictionary) -> int:
 
 static func danger_enemy_power_ratio() -> float:
 	return float(_combat()["danger_enemy_power_ratio"])
+
+
+# --- Habilidades (primeira entrega: 1 por unidade, determinísticas) ---
+
+static func _skills() -> Dictionary:
+	return config().get("skills", {})
+
+
+static func skill_def(skill_id: String) -> Dictionary:
+	var all := _skills()
+	if all.has(skill_id) and all[skill_id] is Dictionary:
+		return all[skill_id]
+	return {}
+
+
+static func skill_cooldown_actions(skill_id: String) -> int:
+	return maxi(int(skill_def(skill_id).get("cooldown_actions", 0)), 0)
+
+
+static func skill_damage_multiplier(skill_id: String) -> float:
+	return float(skill_def(skill_id).get("damage_multiplier", 1.0))
+
+
+static func skill_target(skill_id: String) -> String:
+	return str(skill_def(skill_id).get("target", "first"))
+
+
+static func skill_guard_damage_factor(skill_id: String) -> float:
+	return float(skill_def(skill_id).get("guard_damage_factor", 1.0))
+
+
+## Cura: fração do max_hp do alvo. 0 = skill não é cura.
+static func skill_heal_amount(skill_id: String, target_max_hp: int) -> int:
+	var pct := float(skill_def(skill_id).get("heal_amount", 0.0))
+	if pct <= 0.0:
+		return 0
+	return maxi(1, int(floor(float(target_max_hp) * pct / 100.0)))
+
+
+# --- Varredura limitada (cargas por portal concluído) ---
+
+static func _sweep() -> Dictionary:
+	return config().get("sweep", {})
+
+
+static func sweep_charges_per_clear() -> int:
+	return maxi(int(_sweep().get("charges_per_clear", 0)), 0)
+
+
+static func sweep_charges_cap() -> int:
+	return maxi(int(_sweep().get("charges_cap", 0)), 0)
 
 
 # --- Recompensas ---

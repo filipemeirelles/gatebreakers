@@ -38,7 +38,7 @@ adb install -r build\gatebreakers-debug.apk
 adb shell monkey -p com.gatebreakers.prototype -c android.intent.category.LAUNCHER 1
 ```
 
-O projeto está na versão `0.3.0` (Android `versionCode=3`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
+O projeto está na versão `0.5.0` (Android `versionCode=5`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
 
 Comandos úteis de diagnóstico:
 
@@ -61,9 +61,9 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Validação (06/10/2026): `=== RESULTADO: 281 passaram, 0 falharam ===`, exit 0.** Inclui reprodução determinística do portal 7, invariantes vivo/morto, baixa vida visual, farm, migração schema v2, baús, power guard e red dots. Smoke e export passaram; APK `0.3.0`/`versionCode=3` foi conferido por `aapt`, instalado com `adb install -r` e aberto no aparelho. O save v1 migrou sem reset; o smoke interativo resgatou baús e avançou para o Portal 7. Logcat sem erros de script Godot.
+**Validação (07/10/2026): `=== RESULTADO: 370 passaram, 0 falharam ===`, exit 0.** Inclui habilidades determinísticas (recarga por ação própria, golpe de retaguarda, taunt com redução, cura de aliado mais ferido), caçadores contratáveis (Yoo Jinho, Song Chi-yul, Lee Joohee, Woo Jinchul), equipe combinada (Jinwoo + caçadores + até 2 sombras invocadas), varredura limitada por cargas, navegação de 5 abas baseada em mockups, e overlay de Perfil do Caçador. Smoke headless e export Android passam limpos (APK assinado).
 
-Suites (8): `test_save_service`, `test_navigation` (5 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`.
+Suites (10): `test_save_service`, `test_navigation` (6 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`, `test_skills`, `test_hunters`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
 
 ## 4. Estado das fases (spec §9)
@@ -78,34 +78,35 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 5 Cartões, configurações, acessibilidade e validação Android | concluída | testes e instalação no aparelho confirmados |
 | 6 Visual e gamefeel v0.2 | primeira entrega concluída | retratos SVG por onda, cenário de batalha, animações de golpes/dano, ícones e tema; suíte 238/238; Filipe confirmou teste visual positivo |
 | 7 Ciclo PML v0.3 | implementação e teste de smoke no Android concluídos | auto-farm parou na derrota no Portal 8; baús resgatados; batalha mostrou morto em 0 HP e alvo vivo destacado; suíte 281/281 |
+| 8 Arte e progressão narrativa v0.4 | integração, suíte, export e smoke visual Android concluídos | suíte 292/292; APK `0.4.0`/`versionCode=4` instalado no `RXCT301TRHY`; save schema v2, Portal 8 atual |
+| 9 Habilidades, Caçadores e Mockups v0.5 | implementação, suíte e export Android concluídos | suíte 370/370; save schema v3; habilidades determinísticas, 4 caçadores contratáveis, cargas de varredura, 5 abas, overlay de Perfil; APK `0.5.0`/`versionCode=5` assinado |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
 - **Sem áudio real**: toggles de som/vibração guardam a preferência (`user://settings.cfg`) mas não existem sons/haptics implementados.
-- **Arte temporária**: retratos e ilustrações SVG originais já integrados às telas; ainda são arte vetorial de protótipo, não animação quadro a quadro nem ilustração final. Nada de conteúdo protegido de *Solo Leveling* foi incorporado.
-- **Arte v0.3 aguardando**: novas ilustrações manhwa estão bloqueadas até haver saldo pré-pago Gemini API; nenhuma imagem piloto foi gerada ainda.
+- **Arte**: retratos originais em PNG transparente e ilustrações de arena/cartões em JPEG estão integrados. Os SVGs vetoriais anteriores permanecem no projeto, mas não são os retratos ativos. Nada de assets oficiais de *Solo Leveling* foi incorporado.
 - **Relógio local manipulável**: recompensas AFK baseiam-se no relógio do aparelho (aceite no §11 para protótipo offline).
 - **Sem serviços online**: nenhuma função depende de internet (critério 12); sem contas/nuvem/leaderboards.
 - **Decisão de design**: varredura de portal de chefe já concluído concede a essência do chefe (1 linha de código se Filipe quiser mudar).
 - **Decisão de design**: o level-up de Jinwoo consome XP (100×nível) + ouro (25×nível) e guarda `hunter_level` no save; saves antigos migram automaticamente.
-- **Gatilhos dos cartões narrativos**: Abertura / Portal 1 / Portal 2 (escolhido por Filipe).
+- **Gatilhos dos cartões narrativos**: Abertura / Portal 1 / Portal 4 (Igris, aprovado em 07/10/2026).
 - **Reset**: "Repor progresso" visível apenas em build de debug, com confirmação Sim/Não.
 
 ## 6. Arquitetura rápida (onde mexer)
 
 - `scripts/autoload/game_state.gd` — todo o estado + regras de economia (fonte única).
 - `scripts/systems/save_service.gd` — gravação atómica, validação, migrações (`SCHEMA_VERSION`).
-- Save schema atual v2: `afk_chest_progress_seconds`, `afk_chests_available`, `afk_chest_last_tick_unix`; saves v1 migram automaticamente.
+- Save schema atual v3: caçadores contratados (`hunter_roster`, `hunter_formation`), cargas de varredura (`sweep_charges`), baús AFK; saves v1 e v2 migram automaticamente.
 - `scripts/systems/combat_service.gd` — combate determinístico puro (sem RNG).
 - `scripts/systems/idle_reward_service.gd` — cálculo AFK puro.
 - `scripts/systems/auto_farm_controller.gd` — auto-limpeza foreground; regras/recompensas continuam nos services.
 - `scripts/systems/settings_service.gd` — preferências locais.
 - `scripts/systems/content_db.gd` + `data/*.json` — unidades, portais, cartões narrativos.
-- `scripts/ui/art_helper.gd` + `assets/` — carregamento e apresentação da arte vetorial original.
+- `scripts/ui/art_helper.gd` + `assets/` — carregamento de retratos PNG e arte original de arena/cartões.
 - `scripts/ui/navigation_controller.gd` — telas/overlays, cartões pendentes, áreas seguras.
 - `scenes/**` — UI apresenta o estado, efeitos visuais e encaminha ações (sem lógica económica); `CombatService` continua sendo a fonte determinística dos resultados.
 - `tests/runner.tscn` — suíte headless; novos testes: criar `tests/test_*.gd` e registar em `test_runner.gd`.
 
 ## 7. Próximo passo
 
-Próximo passo: playtest prolongado de equilíbrio do auto-farm e medir FPS durante batalha. O smoke migrou o save e cobriu resgate de baús, Portal 7 e derrota no Portal 8 sem reset. Depois retomar a geração da arte v0.3 quando o saldo pré-pago Gemini estiver disponível.
+Próximo passo: Etapa 2 do planejamento aprovado — Sistema de Equipamentos e Inventário (ativando a aba "Itens", drops de chefes e slots no card pós-batalha conforme `mockupcardbatalhas.png`).

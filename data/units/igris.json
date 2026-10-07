@@ -7,6 +7,7 @@
   "base_attack": 25,
   "base_defense": 12,
   "base_speed": 9,
-  "art": "res://assets/units/igris.svg",
-  "unlock": { "type": "gate_cleared", "gate": 5 }
+  "art": "res://assets/units/igris.png",
+  "skill_id": "igris_strike",
+  "unlock": { "type": "gate_cleared", "gate": 4 }
 }

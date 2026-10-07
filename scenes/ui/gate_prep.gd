@@ -48,7 +48,10 @@ func _refresh() -> void:
 	var gate_def := ContentDB.gate(_gate)
 	if gate_def.is_empty():
 		return
-	gate_label.text = "%s %d" % [Loc.t("ui.gate"), _gate]
+	gate_label.text = "%s %d — %s · %s %s" % [
+		Loc.t("ui.gate"), _gate, String(gate_def.get("display_name", "")),
+		Loc.t("prep.rank"), String(gate_def.get("rank", "?")),
+	]
 	var risk_now := GameState.gate_is_high_risk(_gate)
 	if risk_now != _is_high_risk:
 		_risk_confirmation_pending = false
@@ -56,17 +59,17 @@ func _refresh() -> void:
 	_update_power_warning()
 	var has_boss := bool(gate_def.get("has_boss", false))
 	ArtHelper.configure_rect(enemy_portrait, ArtHelper.enemy_texture(has_boss), Vector2(112, 112))
-	enemy_portrait.tooltip_text = Loc.t("prep.boss") if has_boss else Loc.t("battle.enemies")
+	enemy_portrait.tooltip_text = String(gate_def.get("boss_name", "")) if has_boss else String(gate_def.get("enemy_name", ""))
 	_rebuild_team_preview()
 	enemies_label.text = Loc.t("prep.enemies") % [
 		int(gate_def["total_enemies"]), (gate_def["waves"] as Array).size(),
-	]
+	] + " · " + String(gate_def.get("enemy_name", ""))
 	boss_label.visible = bool(gate_def.get("has_boss", false))
-	boss_label.text = Loc.t("prep.boss")
+	boss_label.text = Loc.t("prep.boss_named") % String(gate_def.get("boss_name", ""))
 
 	var names: Array = []
-	for unit_id in GameState.formation:
-		names.append(str(ContentDB.unit(unit_id).get("display_name", unit_id)))
+	for unit in GameState.team_units():
+		names.append(str(unit["display_name"]))
 	order_label.text = Loc.t("prep.order") % ", ".join(names)
 
 	var parts: Array = [
@@ -105,11 +108,13 @@ func _rebuild_team_preview() -> void:
 	for child in team_preview.get_children():
 		team_preview.remove_child(child)
 		child.queue_free()
-	for unit_id in GameState.formation:
-		var definition := ContentDB.unit(String(unit_id))
+	for unit in GameState.team_units():
+		var definition := ContentDB.unit(String(unit["id"]))
+		if definition.is_empty():
+			definition = ContentDB.hunter(String(unit["id"]))
 		var portrait := TextureRect.new()
-		ArtHelper.configure_rect(portrait, ArtHelper.unit_texture(String(unit_id)), Vector2(74, 74))
-		portrait.tooltip_text = String(definition.get("display_name", unit_id))
+		ArtHelper.configure_rect(portrait, ArtHelper.texture(str(definition.get("art", ""))), Vector2(74, 74))
+		portrait.tooltip_text = String(definition.get("display_name", unit["id"]))
 		team_preview.add_child(portrait)
 
 

@@ -5,9 +5,11 @@ extends Node
 signal state_changed
 
 ## Versão do schema persistido — SaveService usa para migração.
-const SCHEMA_VERSION: int = 2
+const SCHEMA_VERSION: int = 3
 ## Jinwoo + até três sombras (spec §4).
 const MAX_TEAM_SIZE: int = 4
+## Caçadores contratáveis na equipe (além do Jinwoo).
+const HUNTER_TEAM_SIZE: int = 3
 
 ## XP de Jinwoo não gasto — a melhoria de nível consome-o (spec §4).
 var hunter_xp: int = 0
@@ -22,10 +24,18 @@ var last_background_unix: int = 0
 var afk_chest_progress_seconds: int = 0
 var afk_chests_available: int = 0
 var afk_chest_last_tick_unix: int = 0
-## unit_id -> { "level": int, "unlocked": bool }
+## unit_id -> { "level": int, "unlocked": bool } — sombras (invocações do Jinwoo)
 var roster: Dictionary = {}
-## ordem da formação; sempre começa por Jinwoo
+## ordem de ativação das sombras (invocações)
 var formation: Array = []
+## portal -> cargas de varredura disponíveis
+var sweep_charges: Dictionary = {}
+## concessão única de cargas (migração) já realizada
+var sweep_grant_done: bool = true
+## hunter_id -> { "level": int, "hired": bool } — caçadores contratáveis
+var hunter_roster: Dictionary = {}
+## caçadores na equipe (máx HUNTER_TEAM_SIZE, sem Jinwoo)
+var hunter_formation: Array = []
 
 
 ## Aviso de recuperação de save a mostrar à UI (vazio = tudo bem).
@@ -85,7 +95,10 @@ func reset_to_new_game() -> void:
 	roster.clear()
 	for unit_id in ContentDB.unit_ids_at_start():
 		roster[unit_id] = { "level": 1, "unlocked": true }
-	formation = ["jinwoo", "shadow_soldier"]
+	formation = []
+	hunter_roster.clear()
+	hunter_formation = []
+	sweep_charges.clear()
 	story_cards_seen.clear()
 	rebuild_story_queue()
 	state_changed.emit()
@@ -104,11 +117,15 @@ func current_gate() -> int:
 func unit_level(unit_id: String) -> int:
 	if unit_id == "jinwoo":
 		return hunter_level()
+	if ContentDB.hunter(unit_id).has("id"):
+		return hunter_level_of(unit_id)
 	var entry: Dictionary = roster.get(unit_id, {})
 	return int(entry.get("level", 1))
 
 
 func is_unlocked(unit_id: String) -> bool:
+	if ContentDB.hunter(unit_id).has("id"):
+		return hunter_is_hired(unit_id)
 	var entry: Dictionary = roster.get(unit_id, {})
 	return bool(entry.get("unlocked", false))
 
@@ -121,6 +138,8 @@ func unit_stats(unit_id: String) -> Dictionary:
 func unit_stats_at_level(unit_id: String, level: int) -> Dictionary:
 	var def := ContentDB.unit(unit_id)
 	if def.is_empty():
+		def = ContentDB.hunter(unit_id)
+	if def.is_empty():
 		return {}
 	return BalanceConfig.stats_at_level(
 		int(def["base_hp"]), int(def["base_attack"]),
@@ -129,11 +148,16 @@ func unit_stats_at_level(unit_id: String, level: int) -> Dictionary:
 	)
 
 
-## Unidades da formação prontas para o combate (ordem da formação = ordem de ação).
+## Equipe de batalha: Jinwoo + caçadores contratados (formação) + sombras
+## desbloqueadas como invocações (as sombras NÃO ocupam slots de caçador).
+## Ordem = ordem de ação: Jinwoo, caçadores na ordem da formação, invocações.
 func team_units() -> Array:
 	var out: Array = []
-	for unit_id in formation:
+	for unit_id in battle_allies():
 		var def := ContentDB.unit(unit_id)
+		var is_shadow: bool = def.is_empty()
+		if is_shadow:
+			def = ContentDB.hunter(unit_id)
 		if def.is_empty():
 			continue
 		var stats := unit_stats(unit_id)
@@ -141,11 +165,32 @@ func team_units() -> Array:
 			"id": unit_id,
 			"display_name": str(def.get("display_name", unit_id)),
 			"role": str(def.get("role", "")),
+			"skill_id": str(def.get("skill_id", "")),
+			"is_summon": is_shadow,
 			"hp": int(stats["hp"]),
 			"attack": int(stats["attack"]),
 			"defense": int(stats["defense"]),
 			"speed": int(stats["speed"]),
 		})
+	return out
+
+
+## IDs na ordem de batalha (contrato usado por telas e combate).
+func battle_allies() -> Array:
+	var out: Array = ["jinwoo"]
+	for hunter_id in hunter_formation:
+		if hunter_is_hired(String(hunter_id)):
+			out.append(String(hunter_id))
+	var summons := 0
+	for def in ContentDB.all_units():
+		var id := String(def["id"])
+		if id == "jinwoo":
+			continue
+		if summons >= BalanceConfig.summon_cap():
+			break
+		if is_unlocked(id):
+			out.append(id)
+			summons += 1
 	return out
 
 
@@ -305,6 +350,113 @@ func upgrade_shadow(unit_id: String) -> Dictionary:
 	return { "ok": true, "level": int(entry["level"]), "stats": unit_stats(unit_id) }
 
 
+# --- Caçadores contratáveis (contrato = portal concluído + ouro único) ---
+
+func hunter_is_hired(hunter_id: String) -> bool:
+	return bool(hunter_roster.get(hunter_id, {}).get("hired", false))
+
+
+func hunter_level_of(hunter_id: String) -> int:
+	return int(hunter_roster.get(hunter_id, {}).get("level", 1))
+
+
+## Info de contrato: requisito de portal, custo, faltantes, disponibilidade.
+func hunter_contract_info(hunter_id: String) -> Dictionary:
+	var def := ContentDB.hunter(hunter_id)
+	if def.is_empty():
+		return {}
+	var contract: Dictionary = def.get("contract", {})
+	var gate_needed := int(contract.get("gate", 1))
+	var gold_cost := int(contract.get("gold", 0))
+	var gate_ok := highest_gate_cleared >= gate_needed
+	var hired := hunter_is_hired(hunter_id)
+	var in_team := hunter_formation.has(hunter_id)
+	return {
+		"unlocked": gate_ok,
+		"hired": hired,
+		"in_team": in_team,
+		"gate_needed": gate_needed,
+		"gold_cost": gold_cost,
+		"missing_gold": maxi(gold_cost - gold, 0) if not hired else 0,
+		"can_hire": gate_ok and not hired and gold >= gold_cost,
+	}
+
+
+## Contrata: consome o ouro uma vez, marca como contratado, entra na formação
+## se houver vaga, e grava o save de imediato.
+func hire_hunter(hunter_id: String) -> Dictionary:
+	var info := hunter_contract_info(hunter_id)
+	if info.is_empty() or bool(info["hired"]) or not bool(info["can_hire"]):
+		return { "ok": false, "info": info }
+	gold -= int(info["gold_cost"])
+	hunter_roster[hunter_id] = { "level": 1, "hired": true }
+	if hunter_formation.size() < HUNTER_TEAM_SIZE:
+		hunter_formation.append(hunter_id)
+	save_now()
+	state_changed.emit()
+	return { "ok": true, "hired": hunter_id }
+
+
+func add_hunter_to_team(hunter_id: String) -> bool:
+	if not hunter_is_hired(hunter_id) or hunter_formation.has(hunter_id):
+		return false
+	if hunter_formation.size() >= HUNTER_TEAM_SIZE:
+		return false
+	hunter_formation.append(hunter_id)
+	state_changed.emit()
+	save_now()
+	return true
+
+
+func remove_hunter_from_team(hunter_id: String) -> bool:
+	if not hunter_formation.has(hunter_id):
+		return false
+	hunter_formation.erase(hunter_id)
+	state_changed.emit()
+	save_now()
+	return true
+
+
+## Melhoria de caçador: só ouro (essência é das sombras). Fonte única de fórmula.
+func hunter_unit_upgrade_info(hunter_id: String) -> Dictionary:
+	if not hunter_is_hired(hunter_id):
+		return {}
+	var level := hunter_level_of(hunter_id)
+	var at_max := level >= BalanceConfig.max_level()
+	var gold_cost := 0
+	var missing_gold := 0
+	var next_level := level
+	var next_stats: Dictionary = {}
+	if not at_max:
+		gold_cost = BalanceConfig.hunter_gold_cost_to_next_level(level)
+		missing_gold = maxi(gold_cost - gold, 0)
+		next_level = level + 1
+		next_stats = unit_stats_at_level(hunter_id, next_level)
+	return {
+		"available": not at_max and missing_gold == 0,
+		"at_max": at_max,
+		"level": level,
+		"gold_cost": gold_cost,
+		"missing_gold": missing_gold,
+		"next_level": next_level,
+		"next_stats": next_stats,
+		"current_stats": unit_stats_at_level(hunter_id, level),
+	}
+
+
+func upgrade_hunter_unit(hunter_id: String) -> Dictionary:
+	var info := hunter_unit_upgrade_info(hunter_id)
+	if info.is_empty() or not bool(info["available"]):
+		return { "ok": false, "info": info }
+	gold -= int(info["gold_cost"])
+	var entry: Dictionary = hunter_roster.get(hunter_id, { "level": 1, "hired": true })
+	entry["level"] = int(entry.get("level", 1)) + 1
+	hunter_roster[hunter_id] = entry
+	save_now()
+	state_changed.emit()
+	return { "ok": true, "level": int(entry["level"]) }
+
+
 func clear_gate(gate: int) -> void:
 	if gate != highest_gate_cleared + 1:
 		return
@@ -333,9 +485,9 @@ func _unlock_rewards_for_gate(gate: int) -> void:
 
 
 func add_to_formation(unit_id: String) -> bool:
-	if formation.has(unit_id) or not is_unlocked(unit_id):
+	if unit_id == "jinwoo" or formation.has(unit_id) or not is_unlocked(unit_id):
 		return false
-	if formation.size() >= MAX_TEAM_SIZE:
+	if formation.size() >= BalanceConfig.summon_cap():
 		return false
 	formation.append(unit_id)
 	state_changed.emit()
@@ -372,7 +524,19 @@ func apply_battle_victory(gate: int) -> Dictionary:
 	if gate_def.is_empty():
 		return {}
 	var rewards := CombatService.victory_rewards(gate_def)
+	# Bônus de primeira vitória (por portal, em dados): só quando a vitória
+	# avança a progressão de verdade — repetição/varredura não recebem.
+	var advancing := gate == highest_gate_cleared + 1
+	var bonus := float(gate_def.get("first_clear_bonus", 0.0))
+	if advancing and bonus > 0.0:
+		rewards["gold"] = int(floor(float(rewards["gold"]) * (1.0 + bonus)))
+		rewards["xp"] = int(floor(float(rewards["xp"]) * (1.0 + bonus)))
 	add_rewards(int(rewards["gold"]), int(rewards["xp"]), int(rewards["essence"]))
+	# Primeira limpeza manual do portal concede cargas de varredura (E4).
+	if advancing and BalanceConfig.sweep_charges_per_clear() > 0:
+		var cap := BalanceConfig.sweep_charges_cap()
+		var current := int(sweep_charges.get(str(gate), 0))
+		sweep_charges[str(gate)] = mini(current + BalanceConfig.sweep_charges_per_clear(), cap)
 	clear_gate(gate)
 	save_now()
 	return rewards
@@ -385,11 +549,18 @@ func apply_battle_victory(gate: int) -> Dictionary:
 func sweep_gate(gate: int) -> Dictionary:
 	if gate < 1 or gate > highest_gate_cleared:
 		return {}
+	# Sem carga, sem varredura — o jogador limpa o portal manualmente para
+	# repor cargas (funciona offline, sem timer: nunca trava a progressão).
+	if int(sweep_charges.get(str(gate), 0)) <= 0:
+		return {}
 	var gate_def := ContentDB.gate(gate)
 	if gate_def.is_empty():
 		return {}
 	var rewards := CombatService.victory_rewards(gate_def)
 	add_rewards(int(rewards["gold"]), int(rewards["xp"]), int(rewards["essence"]))
+	# Varredura consumindo carga do portal (1 por varredura, vence nada novo).
+	var charges := maxi(int(sweep_charges.get(str(gate), 0)) - 1, 0)
+	sweep_charges[str(gate)] = charges
 	save_now()
 	return rewards
 
@@ -526,6 +697,10 @@ func to_dict() -> Dictionary:
 		"roster": roster.duplicate(true),
 		"formation": formation.duplicate(),
 		"story_cards_seen": story_cards_seen.duplicate(),
+		"hunter_roster": hunter_roster.duplicate(true),
+		"hunter_formation": hunter_formation.duplicate(),
+		"sweep_charges": sweep_charges.duplicate(true),
+		"sweep_grant_done": sweep_grant_done,
 	}
 
 
@@ -553,10 +728,29 @@ func from_dict(data: Dictionary) -> void:
 			"level": int(entry.get("level", 1)),
 			"unlocked": bool(entry.get("unlocked", false)),
 		}
-	formation = Array(data.get("formation", ["jinwoo"]))
+	formation = Array(data.get("formation", []))
 	story_cards_seen.clear()
 	for entry in data.get("story_cards_seen", []):
 		if entry is String:
 			story_cards_seen.append(entry)
+	hunter_roster.clear()
+	hunter_formation.clear()
+	for hunter_id in data.get("hunter_roster", {}):
+		var hentry: Dictionary = data["hunter_roster"][hunter_id]
+		hunter_roster[String(hunter_id)] = {
+			"level": int(hentry.get("level", 1)),
+			"hired": bool(hentry.get("hired", false)),
+		}
+	for hunter_id in data.get("hunter_formation", []):
+		if hunter_id is String and hunter_is_hired(String(hunter_id)):
+			hunter_formation.append(String(hunter_id))
+	hunter_formation.resize(mini(hunter_formation.size(), HUNTER_TEAM_SIZE))
+	sweep_charges.clear()
+	if data.has("sweep_charges") and data["sweep_charges"] is Dictionary:
+		for gate_key in data["sweep_charges"]:
+			var charges: Variant = data["sweep_charges"][gate_key]
+			if gate_key is String and gate_key.is_valid_int() and charges is int and int(charges) > 0:
+				sweep_charges[gate_key] = int(charges)
+	sweep_grant_done = bool(data.get("sweep_grant_done", true))
 	rebuild_story_queue()
 	state_changed.emit()

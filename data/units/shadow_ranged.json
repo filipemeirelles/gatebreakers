@@ -7,6 +7,7 @@
   "base_attack": 18,
   "base_defense": 5,
   "base_speed": 11,
-  "art": "res://assets/units/shadow_ranged.svg",
-  "unlock": { "type": "gate_cleared", "gate": 2 }
+  "art": "res://assets/units/shadow_ranged.png",
+  "skill_id": "ranged_backline",
+  "unlock": { "type": "gate_cleared", "gate": 7 }
 }

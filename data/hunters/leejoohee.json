@@ -1,0 +1,1 @@
+{"id": "leejoohee", "display_name": "Lee Joohee", "rank": "B", "role": "healer", "base_hp": 85, "base_attack": 10, "base_defense": 7, "base_speed": 8, "art": "res://assets/hunters/leejoohee.png", "skill_id": "joohee_soothing_light", "contract": {"type": "gate_and_gold", "gate": 5, "gold": 1200}}

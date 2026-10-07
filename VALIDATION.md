@@ -1,4 +1,4 @@
-# Gatebreakers — validação do ciclo PML v0.3
+# Gatebreakers — histórico de validação
 
 **Data:** 06/10/2026
 
@@ -28,3 +28,42 @@
 - Áudio/vibração continuam adiados; a arte atual ainda é SVG de protótipo.
 
 O APK v0.3 está instalado e aberto; teste de tela realizado no aparelho. O build foi reexportado após o ajuste de posição dos números de dano; versão final `0.3.0`/`versionCode=3`.
+
+## v0.4.0 — arte e progressão narrativa
+
+**Data:** 07/10/2026
+
+**Build:** `0.4.0` (Android `versionCode=4`), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+
+### Verificações concluídas
+
+- Importação Godot (`godot --headless --path . --import`): exit 0; novos retratos PNG e ilustrações JPEG importados.
+- Suíte Godot headless: **292 passaram, 0 falharam**, exit 0. Inclui novos nomes/ranks de portais, chefes, desbloqueios, cartões, retratos, rótulos de preparação e recompensas de essência preservadas.
+- Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
+- Export Android: exit 0. `aapt` confirmou `com.gatebreakers.prototype`, `versionName=0.4.0`, `versionCode=4`; APK com 44.556.103 bytes.
+
+### Smoke no aparelho (07/10/2026)
+
+- `adb install -r` e abertura via launcher: sucesso no `RXCT301TRHY` (1080×2340). `dumpsys package` confirmou `0.4.0`/`versionCode=4`; processo permaneceu ativo.
+- Capturas em `build/gatebreakers-v04-device.png` e `build/gatebreakers-v04-map.png`: mapa apresenta os nomes/ranks da progressão e o combate mostra os retratos PNG, inimigos e cenário novo sem erro visual de carregamento.
+- Save permaneceu no schema v2 e a formação continuou `jinwoo`, `shadow_ranged`, `shadow_guardian`, `igris`; nenhum reset ou edição direta do save foi feito. A abertura também creditou o relatório AFK pendente (+278 ouro, +139 XP, 2 baús prontos).
+- Durante o smoke, o toque ADB usado para dispensar o relatório abriu o combate do Portal 8. A leitura final do save mostra o Portal 8 concluído e níveis/recursos alterados; não reverti o progresso mais recente.
+- Playtest prolongado de ritmo/balanceamento dos chefes e da essência permanece pendente.
+
+## v0.5.0 — habilidades, caçadores e mockups
+
+**Data:** 07/10/2026
+
+**Build:** `0.5.0` (Android `versionCode=5`), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+
+### Verificações concluídas
+
+- Suíte Godot headless: **370 passaram, 0 falharam**, exit 0.
+- Novas coberturas adicionadas:
+  - `test_skills`: ciclo de recarga por ações próprias, multiplicadores determinísticos, Golpe Concentrado (Jinwoo), Golpe de Igris, Postura de Guarda (taunt + redução de dano), Tiro na Retaguarda (mira último vivo), persistência de recargas entre ondas e expiração de buff ao trocar de onda.
+  - `test_hunters`: contratação com requisito de portal e ouro único (Jinho, Song, Joohee, Jinchul), equipe combinada (Jinwoo + caçadores + limite de 2 sombras invocadas), melhoria de caçadores com ouro, cura determinística de aliado ferido, cargas limitadas de varredura (5 por vitória, máx 15), migração schema v2→v3 preservando dados e progresso.
+  - `test_navigation`: 6 overlays verificados, incluindo o novo overlay de Perfil do Caçador com abertura, fechamento e dados dinâmicos.
+- Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
+- Export Android: exit 0, APK assinado com sucesso.
+- Interface alinhada aos mockups: Hub com fundo e cabeçalho (Perfil, Loja, Config), combate em grid de duas colunas (Aliados vs Inimigos), e 5 abas na navegação inferior.
+

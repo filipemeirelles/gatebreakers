@@ -1,15 +1,15 @@
 {
   "gates": [
-    { "gate": 1, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 2, "boss_wave": false, "clear_unlocks_unit": "shadow_ranged" },
-    { "gate": 3, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 4, "boss_wave": false, "clear_unlocks_unit": "shadow_guardian" },
-    { "gate": 5, "boss_wave": true, "clear_unlocks_unit": "igris" },
-    { "gate": 6, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 7, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 8, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 9, "boss_wave": false, "clear_unlocks_unit": null },
-    { "gate": 10, "boss_wave": true, "clear_unlocks_unit": null }
+    { "gate": 1, "display_name": "Masmorra dos Goblins", "arc": "D-Rank Dungeon", "rank": "E", "enemy_name": "Goblin da Masmorra", "boss_wave": false, "boss_name": "", "boss_shadow_essence": 0, "clear_unlocks_unit": null, "first_clear_bonus": 0.5, "enemy_art": "res://assets/units/monstro_goblin.png" },
+    { "gate": 2, "display_name": "Estação de Hapjeong", "arc": "Kasaka", "rank": "C/D", "enemy_name": "Raikan de Presas de Aço", "boss_wave": true, "boss_name": "Kasaka de Presas Venenosas", "boss_shadow_essence": 0, "clear_unlocks_unit": null, "boss_hp_multiplier": 3.0, "boss_attack_multiplier": 1.3, "first_clear_bonus": 0.5, "enemy_art": "res://assets/units/monstro_goblin.png", "boss_art": "res://assets/units/monstro_kasaka.png" },
+    { "gate": 3, "display_name": "Masmorra dos Insetos", "arc": "Insects Dungeon", "rank": "C", "enemy_name": "Aranha Sepulcral", "boss_wave": true, "boss_name": "Aranha Gigante Buryura", "boss_shadow_essence": 0, "clear_unlocks_unit": null, "boss_hp_multiplier": 3.0, "boss_attack_multiplier": 1.3, "first_clear_bonus": 0.5 },
+    { "gate": 4, "display_name": "Provação de Mudança de Classe", "arc": "Job Change", "rank": "A", "enemy_name": "Cavaleiro Hollow", "boss_wave": true, "boss_name": "Igris Vermelho-Sangue", "boss_shadow_essence": 0, "clear_unlocks_unit": "igris" },
+    { "gate": 5, "display_name": "Portão Vermelho", "arc": "Red Gate", "rank": "S", "enemy_name": "Elfo de Gelo", "boss_wave": true, "boss_name": "Baruka", "boss_shadow_essence": 50, "clear_unlocks_unit": "shadow_guardian" },
+    { "gate": 6, "display_name": "Castelo dos Demônios", "arc": "Demon Castle", "rank": "S", "enemy_name": "Demônio do Castelo", "boss_wave": true, "boss_name": "Cerberus", "boss_shadow_essence": 0, "clear_unlocks_unit": null },
+    { "gate": 7, "display_name": "Portão da Hunters Guild", "arc": "Hunters Guild Gate", "rank": "A/S", "enemy_name": "Chacal da Masmorra", "boss_wave": true, "boss_name": "Kargalgan", "boss_shadow_essence": 0, "clear_unlocks_unit": "shadow_ranged" },
+    { "gate": 8, "display_name": "Portão S da Ilha de Jeju", "arc": "Jeju Island", "rank": "S", "enemy_name": "Formiga de Jeju", "boss_wave": true, "boss_name": "Rei das Formigas (Beru)", "boss_shadow_essence": 0, "clear_unlocks_unit": null },
+    { "gate": 9, "display_name": "Portão S de Tóquio", "arc": "Tokyo S-Rank Gate", "rank": "S", "enemy_name": "Gigante de Tóquio", "boss_wave": true, "boss_name": "Legia, Monarca do Início", "boss_shadow_essence": 0, "clear_unlocks_unit": null },
+    { "gate": 10, "display_name": "Invasão de Antares", "arc": "Final Battle", "rank": "S", "enemy_name": "Dragão do Caos", "boss_wave": true, "boss_name": "Antares, Monarca da Destruição", "boss_shadow_essence": 50, "clear_unlocks_unit": null }
   ],
   "total_gates": 10
 }

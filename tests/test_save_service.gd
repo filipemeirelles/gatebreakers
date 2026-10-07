@@ -42,8 +42,8 @@ static func run(t: Node) -> void:
 	var legacy := _valid_state({ "schema_version": 1, "last_background_unix": 1700000123 })
 	_write_raw(JSON.stringify(legacy))
 	result = SaveService.load_state()
-	t.check(result["status"] == "loaded" and int(result["state"]["schema_version"]) == 2,
-		"save v1 migra para schema v2")
+	t.check(result["status"] == "loaded" and int(result["state"]["schema_version"]) == 3,
+		"save v1 migra para o schema atual")
 	t.check(int(result["state"]["afk_chest_progress_seconds"]) == 0
 		and int(result["state"]["afk_chests_available"]) == 0
 		and int(result["state"]["afk_chest_last_tick_unix"]) == 1700000123,
@@ -55,6 +55,9 @@ static func run(t: Node) -> void:
 	t.check(result["status"] == "recovered_corrupt", "json inválido → recovered_corrupt")
 	t.check(str(result["backup_path"]) != "" and FileAccess.file_exists(str(result["backup_path"])), "backup de diagnóstico criado")
 	t.check(_is_valid(result["state"]), "estado novo após corrupção é válido")
+	t.check(result["state"].has("sweep_charges") and result["state"]["sweep_charges"] is Dictionary
+		and bool(result["state"].get("sweep_grant_done", false)),
+		"estado novo após corrupção inicializa cargas de varredura")
 
 	# 3) Valor negativo
 	_write_raw(JSON.stringify(_valid_state({ "gold": -5 })))
@@ -82,7 +85,7 @@ static func run(t: Node) -> void:
 	_write_raw(JSON.stringify(_valid_state({ "formation": ["jinwoo", "ghost_unit"] })))
 	result = SaveService.load_state()
 	t.check(result["status"] == "loaded", "formação estranha não invalida o save")
-	t.check(result["state"]["formation"] == ["jinwoo"], "unidade desconhecida removida da formação")
+	t.check(result["state"]["formation"] == [], "unidade desconhecida e jinwoo saem da formação")
 
 	# 8) Save perdido + temporário válido → recupera do temporário
 	DirAccess.remove_absolute(SaveService.SAVE_PATH)

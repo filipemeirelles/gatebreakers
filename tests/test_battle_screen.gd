@@ -20,6 +20,8 @@ static func run(t: Node) -> void:
 	_set_state(0, 100)
 	nav.show_overlay("battle", { "gate": 1 })
 	t.check(battle.visible, "overlay de combate abre com o portal escolhido")
+	t.check(String(battle.title_label.text).contains("Masmorra dos Goblins"),
+		"título da batalha mostra o nome narrativo do portal")
 	t.check(battle.wave_label.text == ("%s 1 / 3" % Loc.t("battle.wave")), "mostra a onda atual 1 / 3")
 	t.check(battle.enemies_box.get_child_count() == 2, "2 inimigos desenhados na 1.ª onda")
 	t.check(battle.allies_box.get_child_count() == 2, "2 unidades da equipe desenhadas")
@@ -27,7 +29,7 @@ static func run(t: Node) -> void:
 	var first_enemy_id := String(battle._state["enemies"][0]["id"])
 	var enemy_row: Dictionary = battle._rows["enemy:%s" % first_enemy_id]
 	t.check(enemy_row["portrait"] is TextureRect and enemy_row["portrait"].texture != null,
-		"inimigo recebe retrato SVG da batalha")
+		"inimigo recebe retrato da batalha")
 	var second_enemy_id := String(battle._state["enemies"][1]["id"])
 	var second_enemy_row: Dictionary = battle._rows["enemy:%s" % second_enemy_id]
 	t.check(String(enemy_row["name_label"].text).ends_with("#1")
@@ -73,11 +75,11 @@ static func run(t: Node) -> void:
 		and result.get_node("Margin/VBox/RewardStrip/GoldReward/GoldIcon").texture != null,
 		"resultado organiza recompensas com ícones")
 	var expected_rewards := "+%d %s · +%d %s" % [
-		BalanceConfig.victory_gold(1, 6), Loc.t("ui.gold"),
-		BalanceConfig.victory_xp(1, 6), Loc.t("ui.xp"),
+		int(floor(float(BalanceConfig.victory_gold(1, 6)) * 1.5)), Loc.t("ui.gold"),
+		int(floor(float(BalanceConfig.victory_xp(1, 6)) * 1.5)), Loc.t("ui.xp"),
 	]
 	t.check(result.rewards_label.text == expected_rewards, "resultado mostra os recursos ganhos")
-	t.check(GameState.gold == 100 + BalanceConfig.victory_gold(1, 6),
+	t.check(GameState.gold == 100 + int(floor(float(BalanceConfig.victory_gold(1, 6)) * 1.5)),
 		"vitória credita a recompensa exatamente uma vez")
 	t.check(GameState.highest_gate_cleared == 1, "vitória desbloqueia o portal seguinte")
 	t.check(result.unlock_label.visible and result.unlock_label.text == (Loc.t("result.gate_unlocked") % 2),

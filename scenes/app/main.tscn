@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/navigation_controller.gd" id="1_nav"]
 [ext_resource type="PackedScene" path="res://scenes/ui/portal_map.tscn" id="2_portals"]
@@ -12,6 +12,10 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/story_card.tscn" id="10_story"]
 [ext_resource type="Theme" path="res://assets/ui/gatebreakers_theme.tres" id="11_theme"]
 [ext_resource type="Script" path="res://scripts/systems/auto_farm_controller.gd" id="12_auto_farm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/story_screen.tscn" id="13_story"]
+[ext_resource type="PackedScene" path="res://scenes/ui/items_screen.tscn" id="14_items"]
+[ext_resource type="PackedScene" path="res://scenes/ui/missions_screen.tscn" id="15_missions"]
+[ext_resource type="PackedScene" path="res://scenes/ui/profile_overlay.tscn" id="16_profile"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -52,6 +56,21 @@ visible = false
 [node name="Shadows" parent="Screens" instance=ExtResource("4_shadows")]
 visible = false
 
+[node name="Story" parent="Screens" instance=ExtResource("13_story")]
+visible = false
+title_key = "ui.tab.story"
+hint_key = "locked.hint"
+
+[node name="Items" parent="Screens" instance=ExtResource("14_items")]
+visible = false
+title_key = "ui.tab.items"
+hint_key = "locked.hint"
+
+[node name="Missions" parent="Screens" instance=ExtResource("15_missions")]
+visible = false
+title_key = "ui.tab.missions"
+hint_key = "locked.hint"
+
 [node name="Settings" parent="Screens" instance=ExtResource("5_settings")]
 visible = false
 
@@ -65,29 +84,35 @@ offset_bottom = 0.0
 grow_vertical = 0
 theme_override_constants/separation = 0
 
-[node name="PortalsButton" type="Button" parent="BottomBar"]
+[node name="MapButton" type="Button" parent="BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "Portais"
+text = "Mapa"
 
-[node name="HunterButton" type="Button" parent="BottomBar"]
+[node name="HuntersButton" type="Button" parent="BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "Caçador"
+text = "Caçadores"
 
-[node name="ShadowsButton" type="Button" parent="BottomBar"]
+[node name="StoryButton" type="Button" parent="BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "Sombras"
+text = "História"
 
-[node name="SettingsButton" type="Button" parent="BottomBar"]
+[node name="ItemsButton" type="Button" parent="BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "Config"
+text = "Itens"
+
+[node name="MissionsButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Missões"
 
 [node name="Overlays" type="Control" parent="."]
 layout_mode = 1
@@ -107,3 +132,5 @@ mouse_filter = 2
 [node name="BattleResult" parent="Overlays" instance=ExtResource("9_result")]
 
 [node name="StoryCard" parent="Overlays" instance=ExtResource("10_story")]
+
+[node name="ProfileOverlay" parent="Overlays" instance=ExtResource("16_profile")]

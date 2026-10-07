@@ -1,0 +1,1 @@
+{"id": "songchiyul", "display_name": "Song Chi-Yul", "rank": "C", "role": "fighter", "base_hp": 95, "base_attack": 18, "base_defense": 8, "base_speed": 8, "art": "res://assets/hunters/songchiyul.png", "skill_id": "song_kendo_cut", "contract": {"type": "gate_and_gold", "gate": 3, "gold": 500}}

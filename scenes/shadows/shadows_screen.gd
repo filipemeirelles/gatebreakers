@@ -18,7 +18,7 @@ var _last_upgrade_ms: int = -100000
 
 func _ready() -> void:
 	GameState.state_changed.connect(_refresh)
-	$Margin/VBox/Title.text = Loc.t("shadows.title")
+	$Margin/VBox/Title.text = Loc.t("summons.title")
 	_refresh()
 
 
@@ -85,7 +85,7 @@ func _make_row(unit_id: String, def: Dictionary) -> Control:
 	var info := GameState.shadow_upgrade_info(unit_id)
 	var in_team := GameState.formation.has(unit_id)
 	if in_team:
-		title.text += " · %s" % Loc.t("shadows.in_formation")
+		title.text += " · %s" % Loc.t("summons.active")
 
 	# Atributos atuais e previstos (spec §4 linha 128).
 	var current: Dictionary = info["current_stats"]
@@ -138,11 +138,11 @@ func _make_row(unit_id: String, def: Dictionary) -> Control:
 	toggle_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toggle_button.add_theme_font_size_override("font_size", 14)
 	if in_team:
-		toggle_button.text = Loc.t("shadows.remove")
+		toggle_button.text = Loc.t("summons.deactivate")
 		toggle_button.pressed.connect(_on_remove.bind(unit_id))
 	else:
-		toggle_button.text = Loc.t("shadows.add")
-		toggle_button.disabled = GameState.formation.size() >= GameState.MAX_TEAM_SIZE
+		toggle_button.text = Loc.t("summons.activate")
+		toggle_button.disabled = GameState.formation.size() >= BalanceConfig.summon_cap()
 		toggle_button.pressed.connect(_on_add.bind(unit_id))
 	buttons.add_child(toggle_button)
 	details.add_child(buttons)

@@ -14,6 +14,7 @@
     "gold_cost_base_per_level": 25,
     "shadow_gold_cost_base_per_level": 25,
     "shadow_essence_cost_base_per_level": 5,
+    "hunter_gold_cost_base_per_level": 40,
     "hp_growth_per_level": 0.10,
     "attack_growth_per_level": 0.08,
     "defense_growth_per_level": 0.05
@@ -27,11 +28,22 @@
     "power_attack_weight": 2,
     "power_defense_weight": 1,
     "power_speed_weight": 1,
-    "danger_enemy_power_ratio": 0.8
+    "danger_enemy_power_ratio": 0.8,
+    "summon_cap": 2
+  },
+  "skills": {
+    "jinwoo_focused": { "cooldown_actions": 4, "damage_multiplier": 2.0, "target": "first" },
+    "igris_strike": { "cooldown_actions": 3, "damage_multiplier": 1.5, "target": "first" },
+    "guardian_stance": { "cooldown_actions": 4, "target": "self_guard", "guard_damage_factor": 0.75 },
+    "ranged_backline": { "cooldown_actions": 3, "damage_multiplier": 1.0, "target": "last" },
+    "jinho_bold_swing": { "cooldown_actions": 4, "damage_multiplier": 1.5, "target": "first" },
+    "song_kendo_cut": { "cooldown_actions": 3, "damage_multiplier": 1.75, "target": "first" },
+    "joohee_soothing_light": { "cooldown_actions": 4, "target": "ally_heal", "heal_amount": 18 },
+    "jinchul_capture": { "cooldown_actions": 3, "damage_multiplier": 1.6, "target": "first" }
   },
   "enemy_scaling": {
     "base_hp": 60,
-    "hp_per_gate": 20,
+    "hp_per_gate": 15,
     "base_attack": 10,
     "attack_per_gate": 2,
     "base_defense": 2,
@@ -50,6 +62,10 @@
   "afk_rates": {
     "gold_per_hour_base": 10,
     "hunter_xp_per_hour_base": 5
+  },
+  "sweep": {
+    "charges_per_clear": 5,
+    "charges_cap": 15
   },
   "starting": {
     "gold": 100,

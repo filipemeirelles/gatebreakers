@@ -10,7 +10,7 @@ extends RefCounted
 const SAVE_PATH := "user://save_v1.json"
 const TMP_PATH := "user://save_v1.json.tmp"
 const CORRUPT_BACKUP_PATH := "user://save_v1.corrupt.json"
-const SCHEMA_VERSION: int = 2
+const SCHEMA_VERSION: int = 3
 
 ## Resultado do último load: { status, state, backup_path }
 static var last_result: Dictionary = {}
@@ -22,6 +22,10 @@ static func save_state(state: Dictionary) -> bool:
 	payload["afk_chest_progress_seconds"] = int(payload.get("afk_chest_progress_seconds", 0))
 	payload["afk_chests_available"] = int(payload.get("afk_chests_available", 0))
 	payload["afk_chest_last_tick_unix"] = int(payload.get("afk_chest_last_tick_unix", payload.get("last_background_unix", 0)))
+	payload["hunter_roster"] = payload.get("hunter_roster", {})
+	payload["hunter_formation"] = payload.get("hunter_formation", [])
+	payload["sweep_charges"] = payload.get("sweep_charges", {})
+	payload["sweep_grant_done"] = bool(payload.get("sweep_grant_done", true))
 	var text := JSON.stringify(payload)
 	if JSON.parse_string(text) == null:
 		push_error("SaveService: serialização inválida, save não gravado.")
@@ -92,8 +96,12 @@ static func _fresh_state() -> Dictionary:
 		"afk_chests_available": 0,
 		"afk_chest_last_tick_unix": 0,
 		"roster": roster,
-		"formation": ["jinwoo", "shadow_soldier"],
+		"formation": ["shadow_soldier"],
 		"story_cards_seen": [],
+		"hunter_roster": {},
+		"hunter_formation": [],
+		"sweep_charges": {},
+		"sweep_grant_done": true,
 	}
 
 
@@ -159,6 +167,59 @@ static func validate_state(data: Variant) -> Dictionary:
 		for entry in story_raw:
 			if entry is String:
 				story_seen.append(entry)
+	# Caçadores: campos novos do schema v3; saves v1/v2 migram — quem já
+	# passou do Portal 1 recebe Yoo Jinho contratado (sem punir progresso).
+	var hunter_roster: Dictionary = {}
+	var hunter_formation: Array = []
+	var sweep_charges: Dictionary = {}
+	if source_schema >= 3:
+		var hroster_raw: Variant = d.get("hunter_roster", {})
+		if not (hroster_raw is Dictionary):
+			return {}
+		for hunter_id in hroster_raw:
+			if not (hunter_id is String) or not ContentDB.hunter(String(hunter_id)).has("id"):
+				return {}
+			var hentry: Variant = hroster_raw[hunter_id]
+			if not (hentry is Dictionary):
+				return {}
+			var hlevel: Variant = hentry.get("level", 1)
+			if not (hlevel is int or (hlevel is float and float(hlevel) == floor(float(hlevel)))) or float(hlevel) < 1.0:
+				return {}
+			hunter_roster[String(hunter_id)] = {
+				"level": int(hlevel),
+				"hired": bool(hentry.get("hired", false)),
+			}
+		var hform_raw: Variant = d.get("hunter_formation", [])
+		if not (hform_raw is Array):
+			return {}
+		for entry in hform_raw:
+			if entry is String and hunter_roster.has(entry) and bool(hunter_roster[entry]["hired"]):
+				hunter_formation.append(entry)
+				if hunter_formation.size() >= GameState.HUNTER_TEAM_SIZE:
+					break
+		var sweep_raw: Variant = d.get("sweep_charges", {})
+		if not (sweep_raw is Dictionary):
+			return {}
+		for gate_key in sweep_raw:
+			var value: Variant = sweep_raw[gate_key]
+			if gate_key is String and gate_key.is_valid_int() and (value is int) and int(value) >= 0:
+				sweep_charges[gate_key] = int(value)
+	else:
+		# Migração v1/v2: quem já passou do Portal 1 recebe Jinho contratado.
+		if int(d["highest_gate_cleared"]) >= 1:
+			hunter_roster["yoojinho"] = { "level": 1, "hired": true }
+			hunter_formation.append("yoojinho")
+	# Cargas de varredura: concessão única (flag sweep_grant_done). Quem já
+	# limpou portais antes das cargas existirem recebe o equivalente a uma
+	# limpeza de cada portal concluído; a flag impede repetir a concessão.
+	var sweep_grant_done := bool(d.get("sweep_grant_done", false))
+	if not sweep_grant_done:
+		sweep_grant_done = true
+		var per_clear := BalanceConfig.sweep_charges_per_clear()
+		var cap := BalanceConfig.sweep_charges_cap()
+		if per_clear > 0 and int(d["highest_gate_cleared"]) >= 1:
+			for g in range(1, int(d["highest_gate_cleared"]) + 1):
+				sweep_charges[str(g)] = mini(sweep_charges.get(str(g), 0) + per_clear, cap)
 	var roster_raw: Variant = d.get("roster")
 	if not (roster_raw is Dictionary):
 		return {}
@@ -184,12 +245,8 @@ static func validate_state(data: Variant) -> Dictionary:
 		return {}
 	var formation: Array = []
 	for entry in formation_raw:
-		if entry is String and roster.has(entry) and bool(roster[entry]["unlocked"]):
+		if entry is String and roster.has(entry) and bool(roster[entry]["unlocked"]) and entry != "jinwoo":
 			formation.append(entry)
-			if formation.size() >= GameState.MAX_TEAM_SIZE:
-				break
-	if not formation.has("jinwoo"):
-		formation.push_front("jinwoo")
 	formation.resize(mini(formation.size(), GameState.MAX_TEAM_SIZE))
 	return {
 		"schema_version": SCHEMA_VERSION,
@@ -205,6 +262,10 @@ static func validate_state(data: Variant) -> Dictionary:
 		"roster": roster,
 		"formation": formation,
 		"story_cards_seen": story_seen,
+		"hunter_roster": hunter_roster,
+		"hunter_formation": hunter_formation,
+		"sweep_charges": sweep_charges,
+		"sweep_grant_done": sweep_grant_done,
 	}
 
 

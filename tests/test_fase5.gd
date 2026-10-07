@@ -65,10 +65,10 @@ static func _test_story_queue_and_save(t: Node) -> void:
 	# Reconstrução da fila a partir do progresso (arranque com save antigo)
 	GameState.reset_to_new_game()
 	GameState.story_cards_seen = ["system_intro"]
-	GameState.highest_gate_cleared = 2
+	GameState.highest_gate_cleared = 4
 	GameState.rebuild_story_queue()
 	t.check(GameState.pending_story_cards == ["first_advance", "shadow_troop"],
-		"arranque reconstrói a fila pelo progresso (portais 1 e 2)")
+		"arranque reconstrói a fila pelo progresso (portais 1 e 4)")
 
 	# Gatilhos em clear_gate
 	GameState.reset_to_new_game()
@@ -76,8 +76,12 @@ static func _test_story_queue_and_save(t: Node) -> void:
 	t.check(GameState.pending_story_cards.has("first_advance"),
 		"vencer o portal 1 enfileira o primeiro avanço")
 	GameState.clear_gate(2)
+	GameState.clear_gate(3)
+	t.check(not GameState.pending_story_cards.has("shadow_troop"),
+		"Kasaka não antecipa o cartão de aquisição de Igris")
+	GameState.clear_gate(4)
 	t.check(GameState.pending_story_cards.has("shadow_troop"),
-		"vencer o portal 2 enfileira a tropa de sombras")
+		"vencer a Provação de Mudança de Classe enfileira o cartão de Igris")
 
 	# Save legado sem o campo migra para lista vazia
 	var legacy := GameState.to_dict()
@@ -103,7 +107,7 @@ static func _test_story_navigation(t: Node) -> void:
 
 	t.check(story.visible, "cartão abre no arranque quando há pendência")
 	t.check(story.get_node("Margin/VBox/StoryImage").texture != null,
-		"cartão narrativo mostra sua ilustração SVG")
+		"cartão narrativo mostra sua ilustração aprovada")
 	t.check(GameState.story_cards_seen.has("system_intro"),
 		"mostrar na navegação marca o cartão como visto")
 	t.check(GameState.pending_story_cards == ["first_advance"],

@@ -138,14 +138,13 @@ static func _test_locked_and_formation(t: Node) -> void:
 	GameState.roster["shadow_ranged"] = { "level": 1, "unlocked": true }
 	GameState.roster["shadow_guardian"] = { "level": 1, "unlocked": true }
 	GameState.roster["igris"] = { "level": 1, "unlocked": true }
+	t.check(GameState.add_to_formation("shadow_soldier"), "sombra inicial entra na formação")
 	t.check(GameState.add_to_formation("shadow_ranged"), "unidade desbloqueada entra na formação")
-	GameState.add_to_formation("shadow_guardian")
-	t.check(GameState.formation.size() == GameState.MAX_TEAM_SIZE,
-		"formação atinge o máximo de 4")
-	t.check(not GameState.add_to_formation("igris"), "formação cheia recusa nova unidade")
-	t.check(not GameState.remove_from_formation("jinwoo"), "jinwoo não sai da formação")
+	t.check(not GameState.add_to_formation("shadow_guardian"),
+		"formação de invocações respeita o limite configurado")
+	t.check(not GameState.remove_from_formation("jinwoo"), "jinwoo não faz parte da formação de invocações")
 	t.check(GameState.remove_from_formation("shadow_soldier"), "sombra sai da formação")
-	t.check(GameState.formation.size() == 3, "formação encolhe ao remover")
+	t.check(GameState.formation.size() == 1, "formação encolhe ao remover")
 
 
 # --- Critério de sucesso §11: melhorar altera o combate de forma observável ---

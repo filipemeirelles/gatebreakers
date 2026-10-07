@@ -1,0 +1,1 @@
+{"id": "yoojinho", "display_name": "Yoo Jinho", "rank": "D", "role": "fighter", "base_hp": 70, "base_attack": 14, "base_defense": 6, "base_speed": 9, "art": "res://assets/hunters/yoojinho.png", "skill_id": "jinho_bold_swing", "contract": {"type": "gate_and_gold", "gate": 1, "gold": 150}}

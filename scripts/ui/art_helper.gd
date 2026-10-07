@@ -15,8 +15,8 @@ static func unit_texture(unit_id: String) -> Texture2D:
 
 static func enemy_texture(is_boss: bool) -> Texture2D:
 	return texture(
-		"res://assets/units/enemy_boss.svg" if is_boss
-		else "res://assets/units/enemy_common.svg"
+		"res://assets/units/enemy_boss.png" if is_boss
+		else "res://assets/units/enemy_common.png"
 	)
 
 

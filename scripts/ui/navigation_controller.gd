@@ -6,12 +6,15 @@ class_name NavigationController
 ## Overlays (relatório AFK, preparação, combate, resultado) abrem por cima.
 ## A UI só desenha estado e encaminha ações; não calcula regras.
 
-enum Destination { PORTALS, HUNTER, SHADOWS, SETTINGS }
+enum Destination { MAP, HUNTERS, SHADOWS, STORY, ITEMS, MISSIONS, SETTINGS }
 
 const SCREEN_NAMES := {
-	Destination.PORTALS: "Portals",
-	Destination.HUNTER: "Hunter",
+	Destination.MAP: "Portals",
+	Destination.HUNTERS: "Hunter",
 	Destination.SHADOWS: "Shadows",
+	Destination.STORY: "Story",
+	Destination.ITEMS: "Items",
+	Destination.MISSIONS: "Missions",
 	Destination.SETTINGS: "Settings",
 }
 const OVERLAY_KEYS := {
@@ -20,15 +23,17 @@ const OVERLAY_KEYS := {
 	"battle": "Battle",
 	"battle_result": "BattleResult",
 	"story_card": "StoryCard",
+	"profile": "ProfileOverlay",
 }
 const BUTTON_NAMES := {
-	Destination.PORTALS: "PortalsButton",
-	Destination.HUNTER: "HunterButton",
-	Destination.SHADOWS: "ShadowsButton",
-	Destination.SETTINGS: "SettingsButton",
+	Destination.MAP: "MapButton",
+	Destination.HUNTERS: "HuntersButton",
+	Destination.STORY: "StoryButton",
+	Destination.ITEMS: "ItemsButton",
+	Destination.MISSIONS: "MissionsButton",
 }
 
-var current: Destination = Destination.PORTALS
+var current: Destination = Destination.MAP
 var _red_dot_accumulator: float = 0.0
 
 
@@ -87,13 +92,23 @@ func _process(delta: float) -> void:
 
 func _refresh_red_dots() -> void:
 	var dots := GameState.red_dots()
+	# Sombras (invocações) e melhorias de caçador penduradas na aba Caçadores.
 	for destination in BUTTON_NAMES:
 		var button := get_node_or_null("BottomBar/%s" % BUTTON_NAMES[destination]) as Button
 		if button == null:
 			continue
 		var badge := button.get_node_or_null("RedDot") as Label
-		if badge != null:
-			badge.visible = bool(dots.get(Destination.keys()[destination].to_lower(), false))
+		if badge == null:
+			continue
+		var visible := false
+		match destination:
+			Destination.MAP:
+				visible = bool(dots.get("portals", false))
+			Destination.HUNTERS:
+				visible = bool(dots.get("hunter", false)) or bool(dots.get("shadows", false))
+			_:
+				pass
+		badge.visible = visible
 
 
 ## Mostra exatamente uma tela de destino; as restantes ficam ocultas.
@@ -107,6 +122,11 @@ func goto_destination(destination: Destination) -> void:
 		var button := get_node_or_null("BottomBar/%s" % BUTTON_NAMES[destination_key]) as Button
 		if button != null:
 			button.button_pressed = destination_key == destination
+
+
+## Kit de invocações (Sombras): acessível de dentro da tela Caçadores.
+func goto_shadows() -> void:
+	goto_destination(Destination.SHADOWS)
 
 
 func show_overlay(key: String, data: Variant = null) -> void:

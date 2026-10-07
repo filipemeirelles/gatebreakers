@@ -7,6 +7,7 @@
   "base_attack": 12,
   "base_defense": 14,
   "base_speed": 5,
-  "art": "res://assets/units/shadow_guardian.svg",
-  "unlock": { "type": "gate_cleared", "gate": 4 }
+  "art": "res://assets/units/shadow_guardian.png",
+  "skill_id": "guardian_stance",
+  "unlock": { "type": "gate_cleared", "gate": 5 }
 }

@@ -32,6 +32,8 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	auto_farm_button.toggled.connect(_on_auto_farm_toggled)
 	chest_claim_button.pressed.connect(_on_claim_afk_chests)
+	$Margin/VBox/HubHeader/GearButton.pressed.connect(_on_settings)
+	$Margin/VBox/HubHeader/ProfileChip.pressed.connect(_on_profile)
 	$Margin/VBox/Title.text = Loc.t("ui.tab.portals")
 	$Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo/ChestTitle.text = Loc.t("afk.chest_title")
 	ArtHelper.configure_rect(
@@ -52,7 +54,11 @@ func _refresh() -> void:
 	xp_value.text = str(GameState.hunter_xp)
 	essence_value.text = str(GameState.shadow_essence)
 	best_label.text = "%s %d" % [Loc.t("portal.best"), GameState.highest_gate_cleared]
-	gate_label.text = "%s %d" % [Loc.t("portal.current"), GameState.current_gate()]
+	var current_gate := GameState.current_gate()
+	var current_gate_def := ContentDB.gate_row(current_gate)
+	gate_label.text = "%s %d — %s" % [
+		Loc.t("portal.current"), current_gate, String(current_gate_def.get("display_name", "")),
+	]
 	start_button.text = "%s %s %d" % [Loc.t("ui.start_battle"), Loc.t("ui.gate"), GameState.current_gate()]
 	warning_label.text = GameState.load_warning
 	warning_label.visible = not GameState.load_warning.is_empty()
@@ -189,7 +195,10 @@ func _make_gate_row(gate: int) -> PanelContainer:
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.add_theme_font_size_override("font_size", 15)
-	var base := "%s %d — " % [Loc.t("ui.gate"), gate]
+	var base := "%s %d · %s [%s] — " % [
+		Loc.t("ui.gate"), gate, String(gate_def.get("display_name", "")),
+		String(gate_def.get("rank", "?")),
+	]
 	var color := Color(0.58, 0.62, 0.72)
 	if is_cleared:
 		label.text = base + Loc.t("portal.cleared")
@@ -203,10 +212,16 @@ func _make_gate_row(gate: int) -> PanelContainer:
 	icon.tooltip_text = label.text
 	row.add_child(label)
 
-	# Varredura apenas em portais já concluídos (spec §4/§10.11).
+	# Varredura apenas em portais já concluídos E com carga (E4).
 	if is_cleared:
 		var sweep_button := Button.new()
+		var charges := int(GameState.sweep_charges.get(str(gate), 0))
 		sweep_button.text = Loc.t("portal.sweep")
+		if charges <= 0:
+			sweep_button.disabled = true
+			sweep_button.text = "%s (0)" % Loc.t("portal.sweep")
+		else:
+			sweep_button.text = "%s ×%d" % [Loc.t("portal.sweep"), charges]
 		sweep_button.custom_minimum_size = Vector2(150, 44)
 		sweep_button.add_theme_font_size_override("font_size", 15)
 		sweep_button.pressed.connect(_on_sweep.bind(gate))
@@ -229,6 +244,12 @@ func _on_sweep(gate: int) -> void:
 	]
 	sweep_feedback.visible = true
 
+
+func _on_profile() -> void:
+	get_tree().call_group("navigation", "show_overlay", "profile")
+
+func _on_settings() -> void:
+	get_tree().call_group("navigation", "goto_destination", 6)
 
 func _on_start_pressed() -> void:
 	if _auto_farm_controller != null and bool(_auto_farm_controller.get("is_running")):

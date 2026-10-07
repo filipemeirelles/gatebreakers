@@ -42,6 +42,16 @@ static func _test_gate_definition(t: Node) -> void:
 	var last_wave: Array = (gate5["waves"] as Array)[2]
 	t.check(last_wave.size() == 1 and String(last_wave[0]["role"]) == "boss",
 		"última onda do portal 5 é um chefe único")
+	t.check(String(ContentDB.gate(2)["boss_name"]) == "Kasaka de Presas Venenosas"
+		and String((ContentDB.gate(2)["waves"] as Array)[2][0]["display_name"]) == "Kasaka de Presas Venenosas",
+		"nome do chefe de Hapjeong chega à definição de combate")
+	t.check(String(ContentDB.gate(4)["display_name"]) == "Provação de Mudança de Classe"
+		and String(ContentDB.gate(10)["boss_name"]).contains("Antares"),
+		"portais expõem os nomes da progressão narrativa")
+	t.check(String(ContentDB.gate(1)["rank"]) == "E"
+		and String(ContentDB.gate(2)["rank"]) == "C/D"
+		and String(ContentDB.gate(5)["rank"]) == "S",
+		"ranks dos portais seguem o mapa de referência")
 
 
 # --- Vitória e derrota ---
@@ -255,15 +265,18 @@ static func _test_victory_rewards(t: Node) -> void:
 	t.check(bool(gate5["has_boss"]), "portal 5 tem chefe")
 	t.check(int(r5["essence"]) == BalanceConfig.boss_shadow_essence(),
 		"chefe do portal 5 concede shadow_essence")
+	t.check(int(CombatService.victory_rewards(ContentDB.gate(2))["essence"]) == 0
+		and int(CombatService.victory_rewards(ContentDB.gate(10))["essence"]) == BalanceConfig.boss_shadow_essence(),
+		"chefes narrativos preservam a essência nos marcos 5 e 10")
 
 
 # --- Progressão (spec §10.3, §10.4, §10.11) ---
 
 static func _test_progression(t: Node) -> void:
 	_set_progress(0, 100, 0)
-	var expected_gold := BalanceConfig.victory_gold(1, 6)
+	var expected_gold := int(floor(float(BalanceConfig.victory_gold(1, 6)) * 1.5))
 	var rewards := GameState.apply_battle_victory(1)
-	t.check(int(rewards.get("gold", -1)) == expected_gold, "vitória no portal 1 devolve a recompensa")
+	t.check(int(rewards.get("gold", -1)) == expected_gold, "vitória no portal 1 devolve a recompensa com bônus de 1.ª vitória")
 	t.check(GameState.gold == 100 + expected_gold, "recompensa creditada exatamente uma vez")
 	t.check(GameState.highest_gate_cleared == 1, "vitória desbloqueia o portal seguinte")
 	var persisted := SaveService.load_state()
@@ -284,14 +297,25 @@ static func _test_progression(t: Node) -> void:
 	var r2 := GameState.resolve_battle_end({ "gate": 2, "phase": "victory" })
 	t.check(not r2.is_empty() and GameState.highest_gate_cleared == 2,
 		"resolve_battle_end credita a vitória do portal 2")
+	t.check(not GameState.is_unlocked("shadow_ranged"),
+		"Kasaka não antecipa o desbloqueio da sombra de longo alcance")
+	GameState.resolve_battle_end({ "gate": 3, "phase": "victory" })
+	GameState.resolve_battle_end({ "gate": 4, "phase": "victory" })
+	t.check(GameState.is_unlocked("igris"),
+		"concluir a Provação de Mudança de Classe desbloqueia Igris")
+	GameState.resolve_battle_end({ "gate": 5, "phase": "victory" })
+	t.check(GameState.is_unlocked("shadow_guardian"),
+		"concluir o Portão Vermelho desbloqueia a sombra guardiã")
+	GameState.resolve_battle_end({ "gate": 6, "phase": "victory" })
+	GameState.resolve_battle_end({ "gate": 7, "phase": "victory" })
 	t.check(GameState.is_unlocked("shadow_ranged"),
-		"concluir o portal 2 desbloqueia a Sombra Atiradora")
+		"concluir o portão da Hunters Guild desbloqueia a sombra de longo alcance")
 
 	var replay_gold := GameState.gold
-	var replay := GameState.apply_battle_victory(2)
+	var replay := GameState.apply_battle_victory(7)
 	t.check(not replay.is_empty() and GameState.gold > replay_gold,
 		"repetir portal concluído concede recompensa")
-	t.check(GameState.highest_gate_cleared == 2, "repetição não altera a progressão")
+	t.check(GameState.highest_gate_cleared == 7, "repetição não altera a progressão")
 
 
 # --- Varredura (spec §4 Varredura, §10.11) ---
@@ -335,6 +359,7 @@ static func _set_progress(highest: int, gold: int, essence: int) -> void:
 			"shadow_soldier": { "level": 1, "unlocked": true },
 		},
 		"formation": ["jinwoo", "shadow_soldier"],
+		"sweep_charges": {"1": 10, "2": 10, "5": 10},
 	})
 
 

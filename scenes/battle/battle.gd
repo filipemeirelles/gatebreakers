@@ -8,15 +8,16 @@ extends Control
 
 const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 const STEP_SECONDS := 0.45
-const CARD_MIN_WIDTH := 148.0
-const PORTRAIT_SIZE := 126.0
+const CARD_MIN_WIDTH := 118.0
+const CARD_HEIGHT := 168.0
+const PORTRAIT_SIZE := 92.0
 const DEAD_MODULATE := Color(0.46, 0.49, 0.58, 0.52)
 const DEAD_SCALE := Vector2(0.78, 0.78)
 
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var wave_label: Label = $Margin/VBox/WaveLabel
-@onready var enemies_box: HBoxContainer = $Margin/VBox/EnemiesBox
-@onready var allies_box: HBoxContainer = $Margin/VBox/AlliesBox
+@onready var enemies_box: GridContainer = $Margin/VBox/BattleRow/MonstersSide/EnemiesBox
+@onready var allies_box: GridContainer = $Margin/VBox/BattleRow/HuntersSide/AlliesBox
 @onready var log_label: Label = $Margin/VBox/LogPanel/LogLabel
 @onready var pause_button: Button = $Margin/VBox/Controls/PauseButton
 @onready var speed_button: Button = $Margin/VBox/Controls/SpeedButton
@@ -38,8 +39,8 @@ var _node_tweens: Dictionary = {}
 
 func _ready() -> void:
 	title_label.text = Loc.t("battle.title")
-	$Margin/VBox/EnemiesTitle.text = Loc.t("battle.enemies")
-	$Margin/VBox/AlliesTitle.text = Loc.t("battle.allies")
+	$Margin/VBox/BattleRow/MonstersSide/EnemiesTitle.text = Loc.t("battle.enemies")
+	$Margin/VBox/BattleRow/HuntersSide/AlliesTitle.text = Loc.t("battle.allies")
 	$Margin/VBox/ClashBanner/ClashLabel.text = Loc.t("battle.confrontation")
 	pause_button.text = Loc.t("battle.pause")
 	exit_hint.text = Loc.t("battle.exit_hint")
@@ -53,8 +54,8 @@ func _ready() -> void:
 func configure(data: Dictionary) -> void:
 	_stop_animations()
 	_gate = int(data.get("gate", GameState.current_gate()))
-	title_label.text = "%s %d" % [Loc.t("ui.gate"), _gate]
 	var gate_def := ContentDB.gate(_gate)
+	title_label.text = "%s %d — %s" % [Loc.t("ui.gate"), _gate, String(gate_def.get("display_name", ""))]
 	_state = CombatService.start_battle(GameState.team_units(), gate_def)
 	_paused = false
 	_speed = 1
@@ -100,11 +101,20 @@ func _advance() -> void:
 
 func _log_event(ev: Dictionary) -> void:
 	var outcome := String(ev.get("outcome", ""))
-	if String(ev["type"]) == "attack":
-		var key := "battle.log_kill" if bool(ev["killed"]) else "battle.log_attack"
-		log_label.text = Loc.t(key) % [
-			str(ev["attacker"]["name"]), str(ev["target"]["name"]), int(ev["damage"]),
-		]
+	if String(ev["type"]) == "skill":
+		log_label.text = Loc.t("battle.log_guard") % str(ev["attacker"]["name"])
+	elif String(ev["type"]) == "attack":
+		if bool(ev.get("is_skill", false)):
+			var skill_name := Loc.t("skill.%s" % String(ev.get("skill_id", "")), String(ev.get("skill_id", "Habilidade")))
+			var key := "battle.log_skill_kill" if bool(ev["killed"]) else "battle.log_skill"
+			log_label.text = Loc.t(key) % [
+				str(ev["attacker"]["name"]), skill_name, str(ev["target"]["name"]), int(ev["damage"]),
+			]
+		else:
+			var key := "battle.log_kill" if bool(ev["killed"]) else "battle.log_attack"
+			log_label.text = Loc.t(key) % [
+				str(ev["attacker"]["name"]), str(ev["target"]["name"]), int(ev["damage"]),
+			]
 	elif outcome == "wave":
 		# O evento já aponta para a onda seguinte; a onda concluída é a anterior.
 		log_label.text = Loc.t("battle.wave_done") % (int(ev["wave"]) - 1)
@@ -216,7 +226,7 @@ func _clear_box(box: Control) -> void:
 
 func _make_row(side: String, unit: Dictionary, is_ally: bool, unit_index: int) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(CARD_MIN_WIDTH, 206)
+	card.custom_minimum_size = Vector2(CARD_MIN_WIDTH, CARD_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var panel := StyleBoxFlat.new()
@@ -317,10 +327,23 @@ func _mark_current_enemy_target() -> void:
 func _portrait_for(unit: Dictionary, is_ally: bool) -> Texture2D:
 	if is_ally:
 		return ArtHelper.unit_texture(String(unit.get("id", "")))
+	var row := ContentDB.gate_row(_gate)
+	var art_key := "boss_art" if String(unit.get("role", "")) == "boss" else "enemy_art"
+	if row.has(art_key) and row[art_key] is String and not (row[art_key] as String).is_empty():
+		return ArtHelper.texture(str(row[art_key]))
 	return ArtHelper.enemy_texture(String(unit.get("role", "")) == "boss")
 
 
 func _animate_event(ev: Dictionary) -> void:
+	if String(ev.get("type", "")) == "skill":
+		# Postura de Guarda: sem dano; só destaca quem protege e atualiza fileiras.
+		var guard_row: Dictionary = _rows.get(
+			"ally:%s" % String(ev["attacker"].get("id", "")), {}
+		)
+		if not guard_row.is_empty():
+			_animate_attacker(guard_row["portrait"], true)
+		_skill_flash()
+		return
 	if String(ev.get("type", "")) != "attack":
 		if String(ev.get("outcome", "")) == "victory":
 			_pulse_wave()
@@ -358,7 +381,7 @@ func _animate_event(ev: Dictionary) -> void:
 		hit_tween.tween_property(target_portrait, "rotation", -0.035, 0.05)
 		hit_tween.tween_property(target_portrait, "rotation", 0.0, 0.05)
 		hit_tween.parallel().tween_property(target_portrait, "modulate", Color.WHITE, 0.16)
-	_add_damage_popup(target_portrait, int(ev.get("damage", 0)), bool(ev.get("killed", false)))
+	_add_damage_popup(target_portrait, int(ev.get("damage", 0)), bool(ev.get("killed", false)), bool(ev.get("is_skill", false)))
 
 
 func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
@@ -368,15 +391,20 @@ func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(portrait, "rotation", 0.025 * direction, 0.09)
 	tween.parallel().tween_property(portrait, "scale", Vector2(1.1, 1.1), 0.09)
+	tween.parallel().tween_property(portrait, "position:x", portrait.position.x + direction * 10.0, 0.09)
 	tween.tween_property(portrait, "rotation", 0.0, 0.13)
 	tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 0.13)
+	tween.parallel().tween_property(portrait, "position:x", portrait.position.x, 0.13)
 
 
-func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool) -> void:
+func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool, is_skill: bool = false) -> void:
 	var popup := Label.new()
 	popup.text = "-%d%s" % [damage, "!" if killed else ""]
-	popup.add_theme_font_size_override("font_size", 30 if killed else 25)
-	popup.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3) if killed else Color(1.0, 0.96, 0.86))
+	popup.add_theme_font_size_override("font_size", 34 if is_skill else (30 if killed else 25))
+	if is_skill:
+		popup.add_theme_color_override("font_color", Color(0.45, 0.95, 1.0))
+	else:
+		popup.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3) if killed else Color(1.0, 0.96, 0.86))
 	popup.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.09, 0.96))
 	popup.add_theme_constant_override("outline_size", 5)
 	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -391,6 +419,18 @@ func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool) -> void
 	tween.tween_property(popup, "position:y", popup.position.y - 58.0, 0.48)
 	tween.tween_property(popup, "modulate:a", 0.0, 0.48)
 	tween.chain().tween_callback(popup.queue_free)
+
+
+func _skill_flash() -> void:
+	var flash := ColorRect.new()
+	flash.color = Color(0.3, 0.91, 1.0, 0.0)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_layer.add_child(flash)
+	var tween := create_tween()
+	tween.tween_property(flash, "color:a", 0.14, 0.06)
+	tween.tween_property(flash, "color:a", 0.0, 0.22)
+	tween.chain().tween_callback(flash.queue_free)
 
 
 func _pulse_wave() -> void:
