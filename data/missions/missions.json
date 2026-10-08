@@ -1,0 +1,48 @@
+{
+  "daily_missions": [
+    {
+      "id": "daily_battles",
+      "type": "battle_won",
+      "title": "Treinamento de Combate",
+      "description": "Vença 3 batalhas em portais.",
+      "target": 3,
+      "reward_gold": 300,
+      "reward_xp": 100,
+      "reward_essence": 0,
+      "reward_sweep_charges": 2
+    },
+    {
+      "id": "daily_chests",
+      "type": "afk_chest_claimed",
+      "title": "Coleta do Sistema",
+      "description": "Resgate 1 Baú do Sistema (AFK).",
+      "target": 1,
+      "reward_gold": 200,
+      "reward_xp": 50,
+      "reward_essence": 5,
+      "reward_sweep_charges": 0
+    },
+    {
+      "id": "daily_upgrade",
+      "type": "upgrade_performed",
+      "title": "Fortalecimento",
+      "description": "Suba o nível de Jinwoo ou de um caçador.",
+      "target": 1,
+      "reward_gold": 150,
+      "reward_xp": 150,
+      "reward_essence": 0,
+      "reward_sweep_charges": 1
+    },
+    {
+      "id": "daily_boss",
+      "type": "boss_defeated",
+      "title": "Caçada ao Chefe",
+      "description": "Derrote qualquer chefe de portal.",
+      "target": 1,
+      "reward_gold": 400,
+      "reward_xp": 120,
+      "reward_essence": 10,
+      "reward_sweep_charges": 2
+    }
+  ]
+}

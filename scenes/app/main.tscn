@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/navigation_controller.gd" id="1_nav"]
 [ext_resource type="PackedScene" path="res://scenes/ui/portal_map.tscn" id="2_portals"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/items_screen.tscn" id="14_items"]
 [ext_resource type="PackedScene" path="res://scenes/ui/missions_screen.tscn" id="15_missions"]
 [ext_resource type="PackedScene" path="res://scenes/ui/profile_overlay.tscn" id="16_profile"]
+[ext_resource type="PackedScene" path="res://scenes/ui/store_overlay.tscn" id="17_store"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -58,16 +59,12 @@ visible = false
 
 [node name="Story" parent="Screens" instance=ExtResource("13_story")]
 visible = false
-title_key = "ui.tab.story"
-hint_key = "locked.hint"
 
 [node name="Items" parent="Screens" instance=ExtResource("14_items")]
 visible = false
 
 [node name="Missions" parent="Screens" instance=ExtResource("15_missions")]
 visible = false
-title_key = "ui.tab.missions"
-hint_key = "locked.hint"
 
 [node name="Settings" parent="Screens" instance=ExtResource("5_settings")]
 visible = false
@@ -132,3 +129,5 @@ mouse_filter = 2
 [node name="StoryCard" parent="Overlays" instance=ExtResource("10_story")]
 
 [node name="ProfileOverlay" parent="Overlays" instance=ExtResource("16_profile")]
+
+[node name="StoreOverlay" parent="Overlays" instance=ExtResource("17_store")]

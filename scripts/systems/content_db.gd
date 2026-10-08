@@ -9,6 +9,7 @@ const HUNTERS_DIR := "res://data/hunters/"
 const GATES_PATH := "res://data/gates/gates.json"
 const STORY_PATH := "res://data/story/story_cards.json"
 const ITEMS_PATH := "res://data/items/items.json"
+const MISSIONS_PATH := "res://data/missions/missions.json"
 
 static var _units: Dictionary = {}
 static var _hunters: Dictionary = {}
@@ -16,6 +17,7 @@ static var _hunter_order: Array = []
 static var _unit_order: Array = []
 static var _items: Dictionary = {}
 static var _item_order: Array = []
+static var _daily_missions: Array = []
 static var _gate_rows: Array = []
 static var _gate_count: int = 0
 static var _story_cards: Array = []
@@ -54,6 +56,11 @@ static func _ensure_loaded() -> void:
 					var item_id := String(row["id"])
 					_items[item_id] = row
 					_item_order.append(item_id)
+	var missions_file := FileAccess.get_file_as_string(MISSIONS_PATH)
+	if not missions_file.is_empty():
+		var missions_parsed: Variant = JSON.parse_string(missions_file)
+		if missions_parsed is Dictionary:
+			_daily_missions = missions_parsed.get("daily_missions", [])
 
 
 ## Cartões narrativos (spec §4): temas e gatilhos em dados editáveis.
@@ -126,6 +133,20 @@ static func items_for_slot(slot: String) -> Array:
 		if String(it.get("slot", "")) == slot:
 			out.append(it)
 	return out
+
+
+## Missões diárias / do Sistema
+static func daily_missions() -> Array:
+	_ensure_loaded()
+	return _daily_missions
+
+
+static func mission(mission_id: String) -> Dictionary:
+	_ensure_loaded()
+	for m in _daily_missions:
+		if String(m.get("id", "")) == mission_id:
+			return m
+	return {}
 
 
 static func gate_count() -> int:

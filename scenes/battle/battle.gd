@@ -102,26 +102,38 @@ func _advance() -> void:
 func _log_event(ev: Dictionary) -> void:
 	var outcome := String(ev.get("outcome", ""))
 	if String(ev["type"]) == "skill":
-		log_label.text = Loc.t("battle.log_guard") % str(ev["attacker"]["name"])
+		if bool(ev.get("heal", false)):
+			SoundManager.play_heal()
+			log_label.text = "%s cura %s em %d HP" % [
+				str(ev["attacker"]["name"]), str(ev["target"]["name"]), abs(int(ev["damage"]))
+			]
+		else:
+			SoundManager.play_skill()
+			log_label.text = Loc.t("battle.log_guard") % str(ev["attacker"]["name"])
 	elif String(ev["type"]) == "attack":
 		if bool(ev.get("is_skill", false)):
+			SoundManager.play_skill()
 			var skill_name := Loc.t("skill.%s" % String(ev.get("skill_id", "")), String(ev.get("skill_id", "Habilidade")))
 			var key := "battle.log_skill_kill" if bool(ev["killed"]) else "battle.log_skill"
 			log_label.text = Loc.t(key) % [
 				str(ev["attacker"]["name"]), skill_name, str(ev["target"]["name"]), int(ev["damage"]),
 			]
 		else:
+			SoundManager.play_hit()
 			var key := "battle.log_kill" if bool(ev["killed"]) else "battle.log_attack"
 			log_label.text = Loc.t(key) % [
 				str(ev["attacker"]["name"]), str(ev["target"]["name"]), int(ev["damage"]),
 			]
 	elif outcome == "wave":
+		SoundManager.play_skill()
 		# O evento já aponta para a onda seguinte; a onda concluída é a anterior.
 		log_label.text = Loc.t("battle.wave_done") % (int(ev["wave"]) - 1)
 		_pulse_wave()
 	elif outcome == "victory":
+		SoundManager.play_victory()
 		log_label.text = Loc.t("result.victory")
 	elif outcome == "defeat":
+		SoundManager.play_defeat()
 		log_label.text = Loc.t("result.defeat")
 
 
@@ -399,12 +411,17 @@ func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
 
 func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool, is_skill: bool = false) -> void:
 	var popup := Label.new()
-	popup.text = "-%d%s" % [damage, "!" if killed else ""]
-	popup.add_theme_font_size_override("font_size", 34 if is_skill else (30 if killed else 25))
-	if is_skill:
-		popup.add_theme_color_override("font_color", Color(0.45, 0.95, 1.0))
+	if damage < 0:
+		popup.text = "+%d" % abs(damage)
+		popup.add_theme_font_size_override("font_size", 30)
+		popup.add_theme_color_override("font_color", Color(0.35, 0.95, 0.55))
 	else:
-		popup.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3) if killed else Color(1.0, 0.96, 0.86))
+		popup.text = "-%d%s" % [damage, "!" if killed else ""]
+		popup.add_theme_font_size_override("font_size", 34 if is_skill else (30 if killed else 25))
+		if is_skill:
+			popup.add_theme_color_override("font_color", Color(0.45, 0.95, 1.0))
+		else:
+			popup.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3) if killed else Color(1.0, 0.96, 0.86))
 	popup.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.09, 0.96))
 	popup.add_theme_constant_override("outline_size", 5)
 	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

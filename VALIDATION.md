@@ -88,4 +88,30 @@ O APK v0.3 está instalado e aberto; teste de tela realizado no aparelho. O buil
 - Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
 - Export Android: exit 0, APK assinado com sucesso.
 
+## v0.6.0 — missões, lore, loja com ouro e feedback audiovisual
+
+**Data:** 07/10/2026
+
+**Build:** `0.6.0` (Android `versionCode=6`), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+
+### Verificações concluídas
+
+- Suíte Godot headless: **506 passaram, 0 falharam**, exit 0.
+- Nova cobertura `test_missions` (28 asserções novas):
+  - Definições de missões diárias em `data/missions/missions.json` com metas e recompensas balanceadas.
+  - Rastreamento e contagem de eventos: vitórias em portais, chefes derrotados, baús resgatados e melhorias de caçadores.
+  - Resgate com verificação de metas, concessão atômica de ouro, XP e cargas de varredura.
+  - Red dot da aba "Missões" ligado dinamicamente à presença de missões prontas para resgate.
+  - Arquivo e galeria da aba "História" permitindo reler qualquer cartão visto em alta resolução.
+- Nova cobertura `test_store` (13 asserções novas):
+  - Câmbio de suprimentos da Loja do Sistema usando ouro obtido in-game: compra de cargas de varredura (+3), essência de sombras (+10) e XP de caçador (+300).
+  - Bloqueio por saldo insuficiente e verificação de requisitos (ex: cargas exigem ao menos 1 portal concluído).
+- Nova cobertura `test_audio` (16 asserções novas):
+  - `SoundManager` procedural em GDScript gerando e mantendo 8 formas de onda WAV PCM 16-bit 22.050 Hz em memória.
+  - Efeitos sintetizados: clique, golpe básico, habilidade, cura, level up, vitória, derrota e baú.
+  - Respeito à preferência de som em `SettingsService.sound_enabled()`: silencia completamente quando desativado.
+  - Pop-up de cura verde (+HP) e números de dano diferenciados no combate.
+- Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
+- Export Android: exit 0, `versionName=0.6.0`, `versionCode=6`, APK assinado com sucesso.
+
 

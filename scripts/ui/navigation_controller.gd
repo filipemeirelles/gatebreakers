@@ -24,6 +24,7 @@ const OVERLAY_KEYS := {
 	"battle_result": "BattleResult",
 	"story_card": "StoryCard",
 	"profile": "ProfileOverlay",
+	"store": "StoreOverlay",
 }
 const BUTTON_NAMES := {
 	Destination.MAP: "MapButton",
@@ -80,6 +81,7 @@ func _setup_buttons() -> void:
 
 
 func _on_tab_pressed(destination: Destination) -> void:
+	SoundManager.play_click()
 	goto_destination(destination)
 
 
@@ -108,6 +110,8 @@ func _refresh_red_dots() -> void:
 				visible = bool(dots.get("hunter", false)) or bool(dots.get("shadows", false))
 			Destination.ITEMS:
 				visible = bool(dots.get("items", false))
+			Destination.MISSIONS:
+				visible = bool(dots.get("missions", false))
 			_:
 				pass
 		badge.visible = visible

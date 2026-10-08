@@ -40,6 +40,9 @@ var hunter_formation: Array = []
 var inventory: Array = []
 ## unit_id -> { "weapon": String, "accessory": String }
 var equipped: Dictionary = {}
+## progresso de missões do sistema: mission_id -> { "progress": int, "claimed": bool }
+var missions_progress: Dictionary = {}
+var missions_day_epoch: int = 0
 
 
 ## Aviso de recuperação de save a mostrar à UI (vazio = tudo bem).
@@ -105,6 +108,8 @@ func reset_to_new_game() -> void:
 	sweep_charges.clear()
 	inventory.clear()
 	equipped.clear()
+	missions_progress.clear()
+	missions_day_epoch = 0
 	story_cards_seen.clear()
 	rebuild_story_queue()
 	state_changed.emit()
@@ -244,6 +249,7 @@ func red_dots() -> Dictionary:
 		"hunter": hunter_ready,
 		"shadows": shadow_ready,
 		"items": has_unequipped_items_for_active_team(),
+		"missions": has_claimable_missions(),
 	}
 
 
@@ -307,6 +313,7 @@ func upgrade_hunter() -> Dictionary:
 	hunter_xp -= int(info["xp_cost"])
 	gold -= int(info["gold_cost"])
 	hunter_level_value += 1
+	track_mission_event("upgrade_performed", 1)
 	save_now()
 	state_changed.emit()
 	return { "ok": true, "level": hunter_level_value, "stats": unit_stats("jinwoo") }
@@ -358,6 +365,7 @@ func upgrade_shadow(unit_id: String) -> Dictionary:
 	var entry: Dictionary = roster[unit_id]
 	entry["level"] = int(entry.get("level", 1)) + 1
 	roster[unit_id] = entry
+	track_mission_event("upgrade_performed", 1)
 	save_now()
 	state_changed.emit()
 	return { "ok": true, "level": int(entry["level"]), "stats": unit_stats(unit_id) }
@@ -465,6 +473,7 @@ func upgrade_hunter_unit(hunter_id: String) -> Dictionary:
 	var entry: Dictionary = hunter_roster.get(hunter_id, { "level": 1, "hired": true })
 	entry["level"] = int(entry.get("level", 1)) + 1
 	hunter_roster[hunter_id] = entry
+	track_mission_event("upgrade_performed", 1)
 	save_now()
 	state_changed.emit()
 	return { "ok": true, "level": int(entry["level"]) }
@@ -586,6 +595,128 @@ func has_unequipped_items_for_active_team() -> bool:
 	return false
 
 
+# --- Loja do Sistema (E5) ---
+
+func buy_store_item(item_type: String) -> Dictionary:
+	match item_type:
+		"sweep":
+			var cost := 200
+			if gold < cost:
+				return { "ok": false, "reason": "gold" }
+			if highest_gate_cleared <= 0:
+				return { "ok": false, "reason": "no_gates" }
+			gold -= cost
+			var g_key := str(highest_gate_cleared)
+			sweep_charges[g_key] = mini(int(sweep_charges.get(g_key, 0)) + 3, BalanceConfig.sweep_charges_cap())
+			state_changed.emit()
+			save_now()
+			return { "ok": true, "type": "sweep", "charges": 3 }
+		"essence":
+			var cost := 500
+			if gold < cost:
+				return { "ok": false, "reason": "gold" }
+			gold -= cost
+			shadow_essence += 10
+			state_changed.emit()
+			save_now()
+			return { "ok": true, "type": "essence", "essence": 10 }
+		"xp":
+			var cost := 300
+			if gold < cost:
+				return { "ok": false, "reason": "gold" }
+			gold -= cost
+			hunter_xp += 300
+			state_changed.emit()
+			save_now()
+			return { "ok": true, "type": "xp", "xp": 300 }
+	return { "ok": false, "reason": "invalid_type" }
+
+
+# --- Missões do Sistema (E3) ---
+
+func _current_day_epoch() -> int:
+	return int(Time.get_unix_time_from_system() / 86400)
+
+
+func check_daily_missions_reset() -> void:
+	var today := _current_day_epoch()
+	if missions_day_epoch != today and today > 0:
+		missions_day_epoch = today
+		missions_progress.clear()
+		state_changed.emit()
+		save_now()
+
+
+func track_mission_event(event_type: String, amount: int = 1) -> void:
+	check_daily_missions_reset()
+	var updated := false
+	for m in ContentDB.daily_missions():
+		if str(m.get("type", "")) == event_type:
+			var mid := str(m["id"])
+			var target := int(m.get("target", 1))
+			var entry: Dictionary = missions_progress.get(mid, { "progress": 0, "claimed": false })
+			if not bool(entry.get("claimed", false)):
+				entry["progress"] = mini(int(entry.get("progress", 0)) + amount, target)
+				missions_progress[mid] = entry
+				updated = true
+	if updated:
+		state_changed.emit()
+		save_now()
+
+
+func get_mission_status(mission_id: String) -> Dictionary:
+	check_daily_missions_reset()
+	var m_def := ContentDB.mission(mission_id)
+	if m_def.is_empty():
+		return {}
+	var target := int(m_def.get("target", 1))
+	var entry: Dictionary = missions_progress.get(mission_id, { "progress": 0, "claimed": false })
+	var prog := int(entry.get("progress", 0))
+	var claimed := bool(entry.get("claimed", false))
+	return {
+		"progress": prog,
+		"target": target,
+		"claimed": claimed,
+		"can_claim": prog >= target and not claimed,
+	}
+
+
+func claim_mission(mission_id: String) -> Dictionary:
+	check_daily_missions_reset()
+	var status := get_mission_status(mission_id)
+	if status.is_empty() or not bool(status.get("can_claim", false)):
+		return { "ok": false }
+	var m_def := ContentDB.mission(mission_id)
+	var r_gold := int(m_def.get("reward_gold", 0))
+	var r_xp := int(m_def.get("reward_xp", 0))
+	var r_ess := int(m_def.get("reward_essence", 0))
+	var r_swp := int(m_def.get("reward_sweep_charges", 0))
+
+	add_rewards(r_gold, r_xp, r_ess)
+	if r_swp > 0 and highest_gate_cleared > 0:
+		var g_key := str(highest_gate_cleared)
+		var cur := int(sweep_charges.get(g_key, 0))
+		sweep_charges[g_key] = mini(cur + r_swp, BalanceConfig.sweep_charges_cap())
+
+	var entry: Dictionary = missions_progress.get(mission_id, { "progress": int(m_def.get("target", 1)), "claimed": false })
+	entry["claimed"] = true
+	missions_progress[mission_id] = entry
+
+	state_changed.emit()
+	save_now()
+	return { "ok": true, "gold": r_gold, "xp": r_xp, "essence": r_ess, "sweep_charges": r_swp }
+
+
+func has_claimable_missions() -> bool:
+	check_daily_missions_reset()
+	for m in ContentDB.daily_missions():
+		var mid := str(m["id"])
+		var st := get_mission_status(mid)
+		if bool(st.get("can_claim", false)):
+			return true
+	return false
+
+
 func clear_gate(gate: int) -> void:
 	if gate != highest_gate_cleared + 1:
 		return
@@ -672,6 +803,9 @@ func apply_battle_victory(gate: int) -> Dictionary:
 		add_item_to_inventory(drop_id)
 		rewards["item_drop"] = drop_id
 	clear_gate(gate)
+	track_mission_event("battle_won", 1)
+	if bool(gate_def.get("has_boss", false)):
+		track_mission_event("boss_defeated", 1)
 	save_now()
 	return rewards
 
@@ -770,6 +904,7 @@ func claim_afk_chests(now_unix: int = -1) -> Dictionary:
 	}
 	afk_chests_available = 0
 	add_rewards(int(rewards["gold"]), int(rewards["xp"]), 0)
+	track_mission_event("afk_chest_claimed", count)
 	save_now()
 	return rewards
 
@@ -837,6 +972,8 @@ func to_dict() -> Dictionary:
 		"sweep_grant_done": sweep_grant_done,
 		"inventory": inventory.duplicate(),
 		"equipped": equipped.duplicate(true),
+		"missions_progress": missions_progress.duplicate(true),
+		"missions_day_epoch": missions_day_epoch,
 	}
 
 
@@ -906,5 +1043,15 @@ func from_dict(data: Dictionary) -> void:
 						"weapon": String(w) if w is String and inventory.has(String(w)) else "",
 						"accessory": String(a) if a is String and inventory.has(String(a)) else "",
 					}
+	missions_progress.clear()
+	var mp_raw: Variant = data.get("missions_progress", {})
+	if mp_raw is Dictionary:
+		for mid in mp_raw:
+			if mid is String and mp_raw[mid] is Dictionary:
+				missions_progress[mid] = {
+					"progress": int(mp_raw[mid].get("progress", 0)),
+					"claimed": bool(mp_raw[mid].get("claimed", false)),
+				}
+	missions_day_epoch = int(data.get("missions_day_epoch", 0))
 	rebuild_story_queue()
 	state_changed.emit()

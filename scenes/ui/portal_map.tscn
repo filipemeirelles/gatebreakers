@@ -85,8 +85,8 @@ size_flags_horizontal = 3
 layout_mode = 2
 custom_minimum_size = Vector2(96, 44)
 theme_override_font_sizes/font_size = 15
-disabled = true
-text = "Loja 🔒"
+text = "Loja"
+tooltip_text = "Loja de suprimentos do Sistema"
 
 [node name="GearButton" type="Button" parent="Margin/VBox/HubHeader"]
 layout_mode = 2

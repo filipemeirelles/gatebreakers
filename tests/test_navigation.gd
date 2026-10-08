@@ -39,7 +39,7 @@ static func run(t: Node) -> void:
 	t.check(NavigationController.Destination.size() == 7, "destinos: mapa, caçadores, invocações, história, itens, missões, config")
 
 	t.check(screens.get_child_count() == 7, "7 telas filhas criadas")
-	t.check(overlays.get_child_count() == 6, "6 overlays criados")
+	t.check(overlays.get_child_count() == 7, "7 overlays criados")
 
 	for destination in NavigationController.Destination.values():
 		nav.goto_destination(destination)
@@ -119,6 +119,10 @@ static func run(t: Node) -> void:
 	t.check(overlays.get_node("ProfileOverlay").visible, "overlay profile abre")
 	nav.close_overlay("profile")
 	t.check(not overlays.get_node("ProfileOverlay").visible, "overlay profile fecha")
+	nav.show_overlay("store")
+	t.check(overlays.get_node("StoreOverlay").visible, "overlay store abre")
+	nav.close_overlay("store")
+	t.check(not overlays.get_node("StoreOverlay").visible, "overlay store fecha")
 	nav.close_all_overlays()
 	t.check(not overlays.get_node("Battle").visible, "close_all_overlays fecha tudo")
 

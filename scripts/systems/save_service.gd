@@ -28,6 +28,8 @@ static func save_state(state: Dictionary) -> bool:
 	payload["sweep_grant_done"] = bool(payload.get("sweep_grant_done", true))
 	payload["inventory"] = payload.get("inventory", [])
 	payload["equipped"] = payload.get("equipped", {})
+	payload["missions_progress"] = payload.get("missions_progress", {})
+	payload["missions_day_epoch"] = int(payload.get("missions_day_epoch", 0))
 	var text := JSON.stringify(payload)
 	if JSON.parse_string(text) == null:
 		push_error("SaveService: serialização inválida, save não gravado.")
@@ -106,6 +108,8 @@ static func _fresh_state() -> Dictionary:
 		"sweep_grant_done": true,
 		"inventory": [],
 		"equipped": {},
+		"missions_progress": {},
+		"missions_day_epoch": 0,
 	}
 
 
@@ -309,6 +313,8 @@ static func validate_state(data: Variant) -> Dictionary:
 		"sweep_grant_done": sweep_grant_done,
 		"inventory": inventory,
 		"equipped": equipped,
+		"missions_progress": d.get("missions_progress", {}),
+		"missions_day_epoch": int(d.get("missions_day_epoch", 0)),
 	}
 
 

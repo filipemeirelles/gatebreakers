@@ -38,7 +38,7 @@ adb install -r build\gatebreakers-debug.apk
 adb shell monkey -p com.gatebreakers.prototype -c android.intent.category.LAUNCHER 1
 ```
 
-O projeto está na versão `0.5.0` (Android `versionCode=5`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
+O projeto está na versão `0.6.0` (Android `versionCode=6`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
 
 Comandos úteis de diagnóstico:
 
@@ -61,9 +61,22 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Validação (07/10/2026): `=== RESULTADO: 419 passaram, 0 falharam ===`, exit 0.** Inclui habilidades determinísticas, caçadores contratáveis, cargas de varredura, navegação de 5 abas, overlay de Perfil do Caçador, e o sistema completo de Equipamentos & Inventário (10 armas/acessórios temáticos, drops de primeira vitória em chefes, bônus de ATK/DEF/HP refletidos no combate, slots arma/acessório, tela funcional de Itens e indicação no card de vitória). Smoke headless e export Android passam limpos (APK assinado).
+**Validação (07/10/2026): `=== RESULTADO: 506 passaram, 0 falharam ===`, exit 0.** Inclui:
+- Habilidades determinísticas por recarga de ações próprias;
+- 4 Caçadores contratáveis (Yoo Jinho, Song Chi-yul, Lee Joohee com cura, Woo Jinchul);
+- Equipe de combate combinada com cap de sombras invocadas;
+- Cargas de varredura manual com teto configurável;
+- Navegação de 5 abas ativas baseada em mockups (Mapa, Caçadores, História, Itens, Missões);
+- Overlays do Hub: Perfil do Caçador e Loja de Suprimentos do Sistema;
+- Sistema completo de Equipamentos & Inventário (10 peças temáticas de chefes, slots arma/acessório, cálculo em combate);
+- Missões diárias do Sistema com metas dinâmicas, resgate e red dots;
+- Galeria de Lore na aba História para releitura de cartões desbloqueados;
+- SoundManager com síntese procedural em GDScript (8 efeitos sonoros WAV PCM 16-bit em memória) respeitando a configuração de áudio;
+- Save schema v4 com migração atômica automática;
+- Smoke headless `--quit-after 120` exit 0;
+- Export Android `0.6.0` (`versionCode=6`) assinado com sucesso.
 
-Suites (11): `test_save_service`, `test_navigation` (6 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`, `test_skills`, `test_hunters`, `test_items`.
+Suites (13): `test_save_service`, `test_navigation` (7 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`, `test_skills`, `test_hunters`, `test_items`, `test_missions`, `test_store`, `test_audio`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
 
 ## 4. Estado das fases (spec §9)
@@ -81,10 +94,11 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 8 Arte e progressão narrativa v0.4 | integração, suíte, export e smoke visual Android concluídos | suíte 292/292; APK `0.4.0`/`versionCode=4` instalado no `RXCT301TRHY`; save schema v2, Portal 8 atual |
 | 9 Habilidades, Caçadores e Mockups v0.5 | implementação, suíte e export Android concluídos | suíte 370/370; save schema v3; habilidades determinísticas, 4 caçadores contratáveis, cargas de varredura, 5 abas, overlay de Perfil; APK `0.5.0`/`versionCode=5` assinado |
 | 10 Equipamentos e Inventário v0.5.1 | implementação, suíte e export Android concluídos | suíte 419/419; save schema v4; 10 itens de marco, drops de chefe, slots de equipamento, bônus em combate, tela funcional de Itens e red dots; APK assinado |
+| 11 Missões, Lore, Loja e SFX v0.6.0 | implementação, suíte e export Android concluídos | suíte 506/506; todas as 5 abas ativas sem telas bloqueadas; SoundManager procedural integrado; Loja com Ouro ativa; APK `0.6.0`/`versionCode=6` assinado |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
-- **Sem áudio real**: toggles de som/vibração guardam a preferência (`user://settings.cfg`) mas não existem sons/haptics implementados.
+- **Áudio**: SoundManager procedural sintetiza efeitos sonoros em memória (clique, golpe, skill, cura, level up, vitória, derrota, baú) respeitando `SettingsService.sound_enabled()`. Trilha sonora de fundo (BGM) não implementada para manter o pacote enxuto.
 - **Arte**: retratos originais em PNG transparente e ilustrações de arena/cartões em JPEG estão integrados. Os SVGs vetoriais anteriores permanecem no projeto, mas não são os retratos ativos. Nada de assets oficiais de *Solo Leveling* foi incorporado.
 - **Relógio local manipulável**: recompensas AFK baseiam-se no relógio do aparelho (aceite no §11 para protótipo offline).
 - **Sem serviços online**: nenhuma função depende de internet (critério 12); sem contas/nuvem/leaderboards.
@@ -96,13 +110,14 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 ## 6. Arquitetura rápida (onde mexer)
 
 - `scripts/autoload/game_state.gd` — todo o estado + regras de economia (fonte única).
-- `scripts/systems/save_service.gd` — gravação atómica, validação, migrações (`SCHEMA_VERSION`).
-- Save schema atual v4: caçadores contratados (`hunter_roster`, `hunter_formation`), cargas de varredura (`sweep_charges`), inventário e equipamentos (`inventory`, `equipped`), baús AFK; saves v1, v2 e v3 migram automaticamente.
+- `scripts/autoload/sound_manager.gd` — síntese e reprodução de efeitos sonoros procedurais (PCM 16-bit).
+- `scripts/systems/save_service.gd` — gravação atómica, validação, migrações (`SCHEMA_VERSION = 4`).
+- Save schema atual v4: caçadores contratados (`hunter_roster`, `hunter_formation`), cargas de varredura (`sweep_charges`), inventário e equipamentos (`inventory`, `equipped`), missões (`missions_progress`), baús AFK; saves v1, v2 e v3 migram automaticamente.
 - `scripts/systems/combat_service.gd` — combate determinístico puro (sem RNG).
 - `scripts/systems/idle_reward_service.gd` — cálculo AFK puro.
 - `scripts/systems/auto_farm_controller.gd` — auto-limpeza foreground; regras/recompensas continuam nos services.
 - `scripts/systems/settings_service.gd` — preferências locais.
-- `scripts/systems/content_db.gd` + `data/*.json` — unidades, portais, cartões narrativos.
+- `scripts/systems/content_db.gd` + `data/*.json` — unidades, caçadores, equipamentos, missões, portais, cartões narrativos.
 - `scripts/ui/art_helper.gd` + `assets/` — carregamento de retratos PNG e arte original de arena/cartões.
 - `scripts/ui/navigation_controller.gd` — telas/overlays, cartões pendentes, áreas seguras.
 - `scenes/**` — UI apresenta o estado, efeitos visuais e encaminha ações (sem lógica económica); `CombatService` continua sendo a fonte determinística dos resultados.
@@ -110,4 +125,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: Etapa 3 do planejamento aprovado — Missões do Sistema e Galeria de Lore (ativando as abas "Missões" e "História", com tarefas diárias do Sistema e registro dos cartões narrativos desbloqueados).
+Próximo passo: Playtest completo no aparelho Android real com o APK v0.6.0 para avaliação de ritmo de combate, balanceamento do ouro/XP, responsividade do toque e sensação auditiva dos golpes e habilidades.

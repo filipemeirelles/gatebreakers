@@ -34,6 +34,7 @@ func _ready() -> void:
 	chest_claim_button.pressed.connect(_on_claim_afk_chests)
 	$Margin/VBox/HubHeader/GearButton.pressed.connect(_on_settings)
 	$Margin/VBox/HubHeader/ProfileChip.pressed.connect(_on_profile)
+	$Margin/VBox/HubHeader/StoreButton.pressed.connect(_on_store)
 	$Margin/VBox/Title.text = Loc.t("ui.tab.portals")
 	$Margin/VBox/AfkChestPanel/AfkChestRow/ChestInfo/ChestTitle.text = Loc.t("afk.chest_title")
 	ArtHelper.configure_rect(
@@ -142,6 +143,7 @@ func _on_claim_afk_chests() -> void:
 	var rewards := GameState.claim_afk_chests()
 	if rewards.is_empty():
 		return
+	SoundManager.play_chest()
 	var parts := [
 		"+%d %s" % [int(rewards["gold"]), Loc.t("ui.gold").to_lower()],
 		"+%d %s" % [int(rewards["xp"]), Loc.t("ui.xp")],
@@ -247,6 +249,9 @@ func _on_sweep(gate: int) -> void:
 
 func _on_profile() -> void:
 	get_tree().call_group("navigation", "show_overlay", "profile")
+
+func _on_store() -> void:
+	get_tree().call_group("navigation", "show_overlay", "store")
 
 func _on_settings() -> void:
 	get_tree().call_group("navigation", "goto_destination", 6)

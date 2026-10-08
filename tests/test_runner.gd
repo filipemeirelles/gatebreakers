@@ -39,3 +39,6 @@ func _run_all() -> void:
 	SkillTests.run(self)
 	HunterTests.run(self)
 	ItemTests.run(self)
+	MissionTests.run(self)
+	StoreTests.run(self)
+	AudioTests.run(self)

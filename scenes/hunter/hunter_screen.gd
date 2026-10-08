@@ -200,10 +200,13 @@ func _on_hire(hunter_id: String) -> void:
 
 func _on_upgrade_hunter(hunter_id: String) -> void:
 	_throttled(func() -> void:
+		var res: Dictionary = {}
 		if hunter_id == "jinwoo":
-			GameState.upgrade_hunter()
+			res = GameState.upgrade_hunter()
 		else:
-			GameState.upgrade_hunter_unit(hunter_id)
+			res = GameState.upgrade_hunter_unit(hunter_id)
+		if bool(res.get("ok", false)):
+			SoundManager.play_level_up()
 	)
 
 
