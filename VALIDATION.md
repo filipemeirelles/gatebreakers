@@ -114,4 +114,29 @@ O APK v0.3 está instalado e aberto; teste de tela realizado no aparelho. O buil
 - Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
 - Export Android: exit 0, `versionName=0.6.0`, `versionCode=6`, APK assinado com sucesso.
 
+## v0.7.0 — primeira fatia visual
+
+**Data:** 08/10/2026  
+**Build:** `0.7.0` (`versionCode=7`), Godot 4.7.2, `build/gatebreakers-0.7.0-debug.apk`  
+**Dispositivo:** `RXCT301TRHY` (ADB)
+
+### Alterações desta fatia
+
+- Hub reorganizado sobre o cenário existente, com hotspots separados para portal e loja, recursos, baú AFK e farm; lista/varreduras em seletor de portais.
+- Batalha apresenta figuras em escala maior e sem cartões individuais, com cenário menos escurecido e avanço na direção do alvo.
+- Cura agora tem feedback visual próprio; resultado é apresentado sobre a arena congelada e destaca o ícone/nome de um drop real.
+- Resolução das artes cobre caçadores contratados e usa arte do portal quando disponível; PNGs de caçadores/monstros receberam alpha por processamento local, sem Google Image API.
+- Seleção de sombras passa a definir a equipe de combate; a sombra inicial entra na formação nova por padrão; campanha concluída não aponta para portal inexistente.
+
+### Verificações concluídas
+
+- Em cópia isolada com user-data separado: Godot headless `=== RESULTADO: 525 passaram, 0 falharam ===`, exit 0.
+- Godot `--import`: exit 0; sem erros de parse registrados.
+- Export Android debug: exit 0; `aapt` confirmou `com.gatebreakers.prototype`, `versionName=0.7.0`, `versionCode=7`.
+- APK: **48.216.643 bytes**, assinado/aceito pelo instalador Android.
+- `adb install -r`: `Success` no aparelho `RXCT301TRHY`; leitura posterior do pacote confirmou `versionName=0.7.0`, `versionCode=7` e `pm path` retornou o APK instalado.
+- A atualização foi instalada sem desinstalar o app nem solicitar limpeza de dados. Não abri o jogo nem rodei smoke visual no celular nesta sessão; o playtest do proprietário continua pendente.
+- O APK fica abaixo do limite de 50 MiB do anexo do Telegram. O preset local ignora fontes `assets_gen`, mockups, testes e build output para evitar empacotar material de desenvolvimento.
+
+
 

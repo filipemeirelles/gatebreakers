@@ -2,6 +2,8 @@ class_name NavigationTests
 extends RefCounted
 ## Testes de navegação (critério: "navegação não duplica telas" — spec §9 Fase 1).
 
+const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+
 
 static func run(t: Node) -> void:
 	print("-- Navegação --")
@@ -12,16 +14,42 @@ static func run(t: Node) -> void:
 	var screens: Node = main.get_node("Screens")
 	var overlays: Node = main.get_node("Overlays")
 	var nav := main as NavigationController
+	var portal_screen: Node = screens.get_node("Portals")
+	var hub_ui: Control = portal_screen.get_node_or_null("HubPresentation") as Control
+	t.check(hub_ui != null, "hub usa composição espacial dedicada aos hotspots dos mockups")
+	if hub_ui != null:
+		var portal_hotspot := hub_ui.get_node_or_null("PortalPanel/PortalContent/PortalHotspot") as Button
+		var shop_hotspot := hub_ui.get_node_or_null("ShopHotspotPanel/StoreHotspot") as Button
+		var map_button := hub_ui.get_node_or_null("PortalPanel/PortalContent/ViewPortalsButton") as Button
+		t.check(portal_hotspot != null and shop_hotspot != null and map_button != null,
+			"hub expõe portal, loja e seletor como ações separadas")
+		if portal_hotspot != null:
+			portal_hotspot.pressed.emit()
+			t.check(overlays.get_node("GatePrep").visible, "hotspot do portal abre a preparação existente")
+			nav.close_overlay("gate_prep")
+		if shop_hotspot != null:
+			shop_hotspot.pressed.emit()
+			t.check(overlays.get_node("StoreOverlay").visible, "hotspot da loja abre a loja existente")
+			nav.close_overlay("store")
+		if map_button != null:
+			map_button.pressed.emit()
+			t.check(hub_ui.get_node("GateSelector").visible, "seletor mostra portais e varreduras sem ocupar o hub")
+			hub_ui.get_node("GateSelector").visible = false
 	var hero_portrait: TextureRect = screens.get_node("Hunter/Margin/VBox/HeroSection/HeroPortrait")
 	t.check(hero_portrait.texture != null, "tela do Caçador mostra arte de Jinwoo")
 	var shadow_list: VBoxContainer = screens.get_node("Shadows/Margin/VBox/Scroll/UnitList")
 	var shadow_portrait: TextureRect = shadow_list.get_child(0).get_node("Content/Portrait")
 	t.check(shadow_portrait.texture != null, "tela de Sombras mostra retrato da unidade")
-	var portal_icon: TextureRect = screens.get_node("Portals/Margin/VBox/StatsRow/GoldStat/GoldIcon")
-	t.check(portal_icon.texture != null, "mapa de portais mostra ícone de recurso")
-	t.check(screens.get_node("Portals/Margin/VBox/AfkChestPanel/AfkChestRow/ChestIcon").texture != null,
-		"baú AFK mostra ilustração do Sistema")
+	for hunter_def in ContentDB.all_hunters():
+		var hunter_id := String(hunter_def.get("id", ""))
+		t.check(ArtHelper.unit_texture(hunter_id) != null,
+			"ArtHelper resolve textura do caçador contratado %s" % hunter_id)
+	var portal_icon: TextureRect = hub_ui.get_node("ResourcePanel/StatsRow/GoldStat/GoldIcon")
+	t.check(portal_icon.texture != null, "hub mantém ícone de recurso na faixa de recursos")
+	t.check(hub_ui.get_node("AfkChestPanel/AfkChestRow/ChestIcon").texture != null,
+		"baú AFK mantém ícone no card flutuante do hub")
 	var hunter_badge: Label = main.get_node("BottomBar/HuntersButton/RedDot")
+	GameState.hunter_level_value = 1
 	GameState.hunter_xp = 100
 	GameState.gold = 100
 	GameState.state_changed.emit()

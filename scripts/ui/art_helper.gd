@@ -10,7 +10,19 @@ static func texture(path: String) -> Texture2D:
 
 static func unit_texture(unit_id: String) -> Texture2D:
 	var definition := ContentDB.unit(unit_id)
+	if definition.is_empty():
+		definition = ContentDB.hunter(unit_id)
 	return texture(String(definition.get("art", "")))
+
+
+static func enemy_texture_for_gate(gate: int, role: String) -> Texture2D:
+	var gate_def := ContentDB.gate_row(gate)
+	var art_key := "boss_art" if role == "boss" else "enemy_art"
+	var path := String(gate_def.get(art_key, ""))
+	var image := texture(path)
+	if image != null:
+		return image
+	return enemy_texture(role == "boss")
 
 
 static func enemy_texture(is_boss: bool) -> Texture2D:

@@ -41,6 +41,10 @@ static func run(t: Node) -> void:
 	var ally_row: Dictionary = battle._rows["ally:%s" % first_ally_id]
 	t.check(ally_row["portrait"] is TextureRect and ally_row["portrait"].texture != null,
 		"aliado recebe retrato definido nos dados da unidade")
+	var ally_panel: StyleBoxFlat = ally_row["panel"]
+	t.check(ally_panel.bg_color.a <= 0.01 and ally_panel.border_color.a <= 0.01,
+		"combatentes aparecem sem cartões opacos individuais")
+	t.check(battle.PORTRAIT_SIZE >= 128, "retrato de combate usa escala de personagem, não miniatura")
 	battle._advance()
 	t.check(not battle.log_label.text.is_empty(), "primeiro golpe atualiza feedback da batalha")
 	t.check(battle.fx_layer.get_child_count() == 1, "golpe cria número de dano flutuante")
@@ -67,10 +71,16 @@ static func run(t: Node) -> void:
 
 	_drive(battle)
 	t.check(battle._finished, "batalha termina por si")
-	t.check(not battle.visible, "combate fecha ao terminar")
-	t.check(result.visible, "resultado abre ao terminar")
+	t.check(battle.visible and result.visible, "resultado aparece sobre a arena congelada")
 	t.check(result.title_label.text == Loc.t("result.victory", "Vitória"), "resultado mostra vitória")
 	t.check(result.result_portrait.texture != null, "resultado de vitória mostra retrato do caçador")
+	var item_drop_row := result.get_node_or_null("Margin/VBox/ItemDropRow") as HBoxContainer
+	t.check(item_drop_row != null and item_drop_row.visible,
+		"card de resultado destaca apenas o item conquistado de verdade")
+	if item_drop_row != null:
+		t.check(item_drop_row.get_node("ItemIcon").texture != null
+			and String(item_drop_row.get_node("ItemsLabel").text).contains("Adaga de Goblin"),
+			"loot exibido usa ícone e nome do drop real")
 	t.check(result.reward_strip.visible
 		and result.get_node("Margin/VBox/RewardStrip/GoldReward/GoldIcon").texture != null,
 		"resultado organiza recompensas com ícones")
@@ -95,7 +105,7 @@ static func run(t: Node) -> void:
 	t.check(not result.retry_button.visible, "vitória não oferece tentar novamente")
 
 	result._on_continue()
-	t.check(not result.visible, "continuar fecha o resultado")
+	t.check(not result.visible and not battle.visible, "continuar fecha o card e a arena congelada")
 
 	# 2) Derrota não concede nada (portal 10 é forte demais)
 	_set_state(0, 100)

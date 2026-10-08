@@ -9,7 +9,9 @@ const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var result_portrait: TextureRect = $Margin/VBox/ResultPortrait
 @onready var rewards_label: Label = $Margin/VBox/RewardsLabel
-@onready var items_label: Label = $Margin/VBox/ItemsLabel
+@onready var items_label: Label = $Margin/VBox/ItemDropRow/ItemsLabel
+@onready var item_drop_row: HBoxContainer = $Margin/VBox/ItemDropRow
+@onready var item_icon: TextureRect = $Margin/VBox/ItemDropRow/ItemIcon
 @onready var reward_strip: HBoxContainer = $Margin/VBox/RewardStrip
 @onready var gold_amount: Label = $Margin/VBox/RewardStrip/GoldReward/GoldAmount
 @onready var xp_amount: Label = $Margin/VBox/RewardStrip/XpReward/XpAmount
@@ -37,7 +39,7 @@ func configure(data: Dictionary) -> void:
 	title_label.text = Loc.t("result.victory") if victory else Loc.t("result.defeat")
 	result_portrait.texture = (
 		ArtHelper.unit_texture("jinwoo") if victory
-		else ArtHelper.enemy_texture(bool(ContentDB.gate(gate).get("has_boss", false)))
+		else ArtHelper.enemy_texture_for_gate(gate, "boss" if bool(ContentDB.gate(gate).get("has_boss", false)) else "common")
 	)
 	result_portrait.modulate = Color(1, 1, 1, 0)
 	result_portrait.scale = Vector2(0.86, 0.86)
@@ -51,6 +53,9 @@ func configure(data: Dictionary) -> void:
 		Color(0.216, 0.878, 1) if victory else Color(0.95, 0.4, 0.45)
 	)
 
+	item_drop_row.visible = false
+	item_icon.texture = null
+	rewards_label.visible = not victory
 	if victory:
 		var rewards: Dictionary = data.get("rewards", {})
 		var item_drop_id := str(rewards.get("item_drop", ""))
@@ -61,12 +66,8 @@ func configure(data: Dictionary) -> void:
 					str(item_def.get("display_name", item_drop_id)),
 					str(item_def.get("rank", ""))
 				]
-				items_label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.3, 1.0))
-			else:
-				items_label.text = Loc.t("result.items")
-		else:
-			items_label.text = Loc.t("result.items")
-		items_label.visible = true
+				item_icon.texture = ArtHelper.texture(String(item_def.get("icon", "")))
+				item_drop_row.visible = true
 		gold_amount.text = "+%d" % int(rewards.get("gold", 0))
 		xp_amount.text = "+%d" % int(rewards.get("xp", 0))
 		var essence := int(rewards.get("essence", 0))
@@ -101,9 +102,11 @@ func configure(data: Dictionary) -> void:
 
 
 func _on_continue() -> void:
+	get_tree().call_group("navigation", "close_overlay", "battle")
 	get_tree().call_group("navigation", "close_and_check_story", "battle_result")
 
 
 func _on_retry() -> void:
+	get_tree().call_group("navigation", "close_overlay", "battle")
 	get_tree().call_group("navigation", "close_overlay", "battle_result")
 	get_tree().call_group("navigation", "show_overlay", "gate_prep")

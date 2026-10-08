@@ -11,7 +11,7 @@ static func run(t: Node) -> void:
 	t.add_child(main)
 	var controller: Node = main.get_node("AutoFarmController")
 	var portal_map = main.get_node("Screens/Portals")
-	var auto_status: Label = portal_map.get_node("Margin/VBox/AutoFarmPanel/AutoFarmRow/AutoFarmStatus")
+	var auto_status: Label = portal_map.get_node("HubPresentation/AutoFarmPanel/AutoFarmRow/AutoFarmStatus")
 	var result = main.get_node("Overlays/BattleResult")
 
 	portal_map.call("_on_auto_farm_toggled", true)

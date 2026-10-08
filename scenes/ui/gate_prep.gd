@@ -58,7 +58,11 @@ func _refresh() -> void:
 	_is_high_risk = risk_now
 	_update_power_warning()
 	var has_boss := bool(gate_def.get("has_boss", false))
-	ArtHelper.configure_rect(enemy_portrait, ArtHelper.enemy_texture(has_boss), Vector2(112, 112))
+	ArtHelper.configure_rect(
+		enemy_portrait,
+		ArtHelper.enemy_texture_for_gate(_gate, "boss" if has_boss else "common"),
+		Vector2(112, 112)
+	)
 	enemy_portrait.tooltip_text = String(gate_def.get("boss_name", "")) if has_boss else String(gate_def.get("enemy_name", ""))
 	_rebuild_team_preview()
 	enemies_label.text = Loc.t("prep.enemies") % [

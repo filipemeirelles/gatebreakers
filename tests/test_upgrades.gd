@@ -138,7 +138,7 @@ static func _test_locked_and_formation(t: Node) -> void:
 	GameState.roster["shadow_ranged"] = { "level": 1, "unlocked": true }
 	GameState.roster["shadow_guardian"] = { "level": 1, "unlocked": true }
 	GameState.roster["igris"] = { "level": 1, "unlocked": true }
-	t.check(GameState.add_to_formation("shadow_soldier"), "sombra inicial entra na formação")
+	t.check(GameState.formation.has("shadow_soldier"), "sombra inicial entra na formação por padrão")
 	t.check(GameState.add_to_formation("shadow_ranged"), "unidade desbloqueada entra na formação")
 	t.check(not GameState.add_to_formation("shadow_guardian"),
 		"formação de invocações respeita o limite configurado")

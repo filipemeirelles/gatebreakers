@@ -33,6 +33,13 @@ const BUTTON_NAMES := {
 	Destination.ITEMS: "ItemsButton",
 	Destination.MISSIONS: "MissionsButton",
 }
+const BUTTON_ICONS := {
+	Destination.MAP: "res://assets/icons/icon_portals.svg",
+	Destination.HUNTERS: "res://assets/icons/icon_hunter.svg",
+	Destination.STORY: "res://assets/icons/icon_shadows.svg",
+	Destination.ITEMS: "res://assets/icons/icon_gold.svg",
+	Destination.MISSIONS: "res://assets/icons/icon_xp.svg",
+}
 
 var current: Destination = Destination.MAP
 var _red_dot_accumulator: float = 0.0
@@ -61,6 +68,14 @@ func _setup_buttons() -> void:
 		if button == null:
 			continue
 		button.text = Loc.t("ui.tab.%s" % Destination.keys()[destination].to_lower())
+		button.flat = true
+		button.expand_icon = true
+		var icon_path: String = BUTTON_ICONS.get(destination, "")
+		if not icon_path.is_empty():
+			var icon_tex := load(icon_path) as Texture2D
+			if icon_tex != null:
+				button.icon = icon_tex
+		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_on_tab_pressed.bind(destination))
 		var badge := button.get_node_or_null("RedDot") as Label
 		if badge == null:

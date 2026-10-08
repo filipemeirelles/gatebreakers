@@ -102,7 +102,7 @@ func reset_to_new_game() -> void:
 	roster.clear()
 	for unit_id in ContentDB.unit_ids_at_start():
 		roster[unit_id] = { "level": 1, "unlocked": true }
-	formation = []
+	formation = ["shadow_soldier"] if ContentDB.unit("shadow_soldier").has("id") else []
 	hunter_roster.clear()
 	hunter_formation = []
 	sweep_charges.clear()
@@ -122,7 +122,15 @@ func hunter_level() -> int:
 
 
 func current_gate() -> int:
-	return highest_gate_cleared + 1
+	var total := ContentDB.gate_count()
+	if total <= 0:
+		return 1
+	return mini(highest_gate_cleared + 1, total)
+
+
+func campaign_complete() -> bool:
+	var total := ContentDB.gate_count()
+	return total > 0 and highest_gate_cleared >= total
 
 
 func unit_level(unit_id: String) -> int:
@@ -171,18 +179,18 @@ func unit_stats_at_level(unit_id: String, level: int) -> Dictionary:
 func team_units() -> Array:
 	var out: Array = []
 	for unit_id in battle_allies():
-		var def := ContentDB.unit(unit_id)
-		var is_shadow: bool = def.is_empty()
-		if is_shadow:
-			def = ContentDB.hunter(unit_id)
-		if def.is_empty():
+		var definition := ContentDB.unit(String(unit_id))
+		var is_shadow: bool = not definition.is_empty() and String(unit_id) != "jinwoo"
+		if definition.is_empty():
+			definition = ContentDB.hunter(unit_id)
+		if definition.is_empty():
 			continue
 		var stats := unit_stats(unit_id)
 		out.append({
 			"id": unit_id,
-			"display_name": str(def.get("display_name", unit_id)),
-			"role": str(def.get("role", "")),
-			"skill_id": str(def.get("skill_id", "")),
+			"display_name": str(definition.get("display_name", unit_id)),
+			"role": str(definition.get("role", "")),
+			"skill_id": str(definition.get("skill_id", "")),
 			"is_summon": is_shadow,
 			"hp": int(stats["hp"]),
 			"attack": int(stats["attack"]),
@@ -193,21 +201,26 @@ func team_units() -> Array:
 
 
 ## IDs na ordem de batalha (contrato usado por telas e combate).
+## Ordem: Jinwoo, caçadores na ordem contratada e sombras escolhidas na formação.
+## O limite de invocações conta somente sombras, não Jinwoo nem caçadores.
 func battle_allies() -> Array:
 	var out: Array = ["jinwoo"]
 	for hunter_id in hunter_formation:
-		if hunter_is_hired(String(hunter_id)):
-			out.append(String(hunter_id))
+		var id := String(hunter_id)
+		if hunter_is_hired(id) and not out.has(id):
+			out.append(id)
+
 	var summons := 0
-	for def in ContentDB.all_units():
-		var id := String(def["id"])
-		if id == "jinwoo":
+	for unit_id in formation:
+		var id := String(unit_id)
+		if id == "jinwoo" or out.has(id) or not is_unlocked(id):
+			continue
+		if ContentDB.unit(id).is_empty():
 			continue
 		if summons >= BalanceConfig.summon_cap():
 			break
-		if is_unlocked(id):
-			out.append(id)
-			summons += 1
+		out.append(id)
+		summons += 1
 	return out
 
 

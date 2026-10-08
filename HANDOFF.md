@@ -38,7 +38,7 @@ adb install -r build\gatebreakers-debug.apk
 adb shell monkey -p com.gatebreakers.prototype -c android.intent.category.LAUNCHER 1
 ```
 
-O projeto está na versão `0.6.0` (Android `versionCode=6`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto.
+O projeto está na versão `0.7.0` (Android `versionCode=7`). `export_presets.cfg` é local/ignorado pelo git; ao recriá-lo numa máquina, alinhar `version/name` e `version/code` com a versão do projeto. O APK desta versão é `build/gatebreakers-0.7.0-debug.apk`.
 
 Comandos úteis de diagnóstico:
 
@@ -95,6 +95,7 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 9 Habilidades, Caçadores e Mockups v0.5 | implementação, suíte e export Android concluídos | suíte 370/370; save schema v3; habilidades determinísticas, 4 caçadores contratáveis, cargas de varredura, 5 abas, overlay de Perfil; APK `0.5.0`/`versionCode=5` assinado |
 | 10 Equipamentos e Inventário v0.5.1 | implementação, suíte e export Android concluídos | suíte 419/419; save schema v4; 10 itens de marco, drops de chefe, slots de equipamento, bônus em combate, tela funcional de Itens e red dots; APK assinado |
 | 11 Missões, Lore, Loja e SFX v0.6.0 | implementação, suíte e export Android concluídos | suíte 506/506; todas as 5 abas ativas sem telas bloqueadas; SoundManager procedural integrado; Loja com Ouro ativa; APK `0.6.0`/`versionCode=6` assinado |
+| 12 Primeira fatia visual v0.7.0 | implementada e instalada; playtest do proprietário pendente | correções de equipe/arte, hub com hotspots, arena sem cards, card de resultado sobre batalha, recortes PNG com alfa; suíte isolada 525/525; APK `0.7.0`/`versionCode=7` instalado por ADB no `RXCT301TRHY`; sem smoke visual executado no telefone nesta sessão |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
@@ -125,4 +126,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: Playtest completo no aparelho Android real com o APK v0.6.0 para avaliação de ritmo de combate, balanceamento do ouro/XP, responsividade do toque e sensação auditiva dos golpes e habilidades.
+Próximo passo: Filipe abrir a build `0.7.0` já instalada no `RXCT301TRHY` e avaliar hub, recortes das figuras, legibilidade da arena e card de resultado. O smoke visual no aparelho ainda não foi feito por este agente. Só depois do feedback, continuar polindo arte/animações e medir FPS; não gerar mais imagens pagas sem necessidade demonstrada.

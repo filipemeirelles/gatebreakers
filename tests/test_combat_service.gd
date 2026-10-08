@@ -57,6 +57,7 @@ static func _test_gate_definition(t: Node) -> void:
 # --- Vitória e derrota ---
 
 static func _test_victory(t: Node) -> void:
+	GameState.reset_to_new_game()
 	var gate_def := ContentDB.gate(1)
 	var state := CombatService.start_battle(_team(), gate_def)
 	CombatService.run_to_completion(state)

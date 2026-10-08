@@ -11,6 +11,8 @@ static func run(t: Node) -> void:
 
 	_test_contract(t)
 	_test_hire_and_team(t)
+	_test_selected_shadow_formation(t)
+	_test_campaign_completion(t)
 	_test_hunter_upgrade(t)
 	_test_heal_skill(t)
 	_test_sweep_charges(t)
@@ -79,6 +81,53 @@ static func _test_hire_and_team(t: Node) -> void:
 		or not GameState.add_hunter_to_team("woojinchul"), "não contratado não entra na equipe")
 	t.check(GameState.hunter_formation.size() == 3, "equipe de caçadores tem no máximo 3")
 	t.check(GameState.remove_hunter_from_team("songchiyul"), "caçador sai da equipe")
+
+
+static func _test_selected_shadow_formation(t: Node) -> void:
+	var state := _state(5, 5000)
+	state["schema_version"] = 4
+	state["roster"] = {
+		"jinwoo": { "level": 1, "unlocked": true },
+		"shadow_soldier": { "level": 1, "unlocked": true },
+		"igris": { "level": 1, "unlocked": true },
+		"shadow_guardian": { "level": 1, "unlocked": true },
+		"shadow_ranged": { "level": 1, "unlocked": true },
+	}
+	state["formation"] = ["shadow_ranged", "igris", "shadow_guardian"]
+	state["hunter_roster"] = { "yoojinho": { "level": 1, "hired": true } }
+	state["hunter_formation"] = ["yoojinho"]
+	state["afk_chest_progress_seconds"] = 0
+	state["afk_chests_available"] = 0
+	state["afk_chest_last_tick_unix"] = 0
+	state["sweep_charges"] = {}
+	state["sweep_grant_done"] = true
+	state["inventory"] = []
+	state["equipped"] = {}
+	state["missions_progress"] = {}
+	state["missions_day_epoch"] = 0
+	GameState.from_dict(state)
+
+	var ids := GameState.battle_allies()
+	t.check(ids == ["jinwoo", "yoojinho", "shadow_ranged", "igris"],
+		"combate respeita caçador e ordem das sombras selecionadas dentro do cap")
+	var types := {}
+	for unit in GameState.team_units():
+		types[String(unit["id"])] = bool(unit.get("is_summon", false))
+	t.check(not bool(types.get("jinwoo", false)) and not bool(types.get("yoojinho", false)),
+		"protagonista e caçador contratado não são classificados como invocações")
+	t.check(bool(types.get("shadow_ranged", false)) and bool(types.get("igris", false)),
+		"sombras selecionadas são classificadas como invocações")
+	t.check(not ids.has("shadow_soldier") and ids.size() == 4,
+		"sombra desbloqueada mas não selecionada não entra automaticamente")
+
+
+static func _test_campaign_completion(t: Node) -> void:
+	GameState.from_dict(_state(ContentDB.gate_count(), 100))
+	t.check(GameState.campaign_complete(), "estado da campanha final distingue conteúdo concluído")
+	t.check(GameState.current_gate() == ContentDB.gate_count(),
+		"campanha concluída não avança para portal inexistente")
+	t.check(not ContentDB.gate(GameState.current_gate()).is_empty(),
+		"portal apresentado após concluir campanha tem definição válida")
 
 
 static func _test_hunter_upgrade(t: Node) -> void:

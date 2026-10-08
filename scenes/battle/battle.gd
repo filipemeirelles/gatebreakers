@@ -8,11 +8,23 @@ extends Control
 
 const ArtHelper = preload("res://scripts/ui/art_helper.gd")
 const STEP_SECONDS := 0.45
-const CARD_MIN_WIDTH := 118.0
-const CARD_HEIGHT := 168.0
-const PORTRAIT_SIZE := 92.0
+const ACTOR_W := 140.0
+const ACTOR_H := 210.0
 const DEAD_MODULATE := Color(0.46, 0.49, 0.58, 0.52)
-const DEAD_SCALE := Vector2(0.78, 0.78)
+const DEAD_SCALE := Vector2(0.72, 0.72)
+
+# Slots 2×3 por lado, livres sobre a arena (sem cards).
+# Cada slot: [x_pct, y_pct] no viewport 720×1280.
+const ALLY_SLOTS := [
+	Vector2(0.12, 0.38), Vector2(0.32, 0.38),
+	Vector2(0.12, 0.58), Vector2(0.32, 0.58),
+	Vector2(0.12, 0.78), Vector2(0.32, 0.78),
+]
+const ENEMY_SLOTS := [
+	Vector2(0.68, 0.38), Vector2(0.88, 0.38),
+	Vector2(0.68, 0.58), Vector2(0.88, 0.58),
+	Vector2(0.68, 0.78), Vector2(0.88, 0.78),
+]
 
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var wave_label: Label = $Margin/VBox/WaveLabel
@@ -194,7 +206,6 @@ func _finish() -> void:
 	}
 	if victory and unlock_id is String and not had_unit and GameState.is_unlocked(str(unlock_id)):
 		data["unlocked_unit"] = str(ContentDB.unit(str(unlock_id)).get("display_name", unlock_id))
-	get_tree().call_group("navigation", "close_overlay", "battle")
 	get_tree().call_group("navigation", "show_overlay", "battle_result", data)
 
 
@@ -222,99 +233,121 @@ func _on_exit() -> void:
 func _build_rows() -> void:
 	_rows.clear()
 	_displayed_wave_index = int(_state.get("wave_index", 0))
-	_clear_box(enemies_box)
-	_clear_box(allies_box)
+	# Remove atores antigos (não toca em FxLayer).
+	for child in get_children():
+		if child.has_meta("actor"):
+			remove_child(child)
+			child.queue_free()
 	for i in _state["enemies"].size():
-		enemies_box.add_child(_make_row("enemy", _state["enemies"][i], false, i))
+		add_child(_make_actor("enemy", _state["enemies"][i], false, i))
 	for i in _state["allies"].size():
-		allies_box.add_child(_make_row("ally", _state["allies"][i], true, i))
+		add_child(_make_actor("ally", _state["allies"][i], true, i))
 
 
-func _clear_box(box: Control) -> void:
-	for child in box.get_children():
-		box.remove_child(child)
-		child.queue_free()
+func _make_actor(side: String, unit: Dictionary, is_ally: bool, unit_index: int) -> Control:
+	var slots := ALLY_SLOTS if is_ally else ENEMY_SLOTS
+	var slot: Vector2 = slots[unit_index % slots.size()]
+	var vp := Vector2(720, 1280)
 
+	var actor := Control.new()
+	actor.set_meta("actor", true)
+	actor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actor.position = Vector2(slot.x * vp.x - ACTOR_W * 0.5, slot.y * vp.y - ACTOR_H * 0.5)
+	actor.size = Vector2(ACTOR_W, ACTOR_H)
 
-func _make_row(side: String, unit: Dictionary, is_ally: bool, unit_index: int) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(CARD_MIN_WIDTH, CARD_HEIGHT)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.025, 0.045, 0.09, 0.88) if is_ally else Color(0.09, 0.035, 0.065, 0.9)
-	panel.border_color = Color(0.12, 0.8, 0.98, 0.52) if is_ally else Color(0.97, 0.24, 0.37, 0.58)
-	panel.set_border_width_all(1)
-	panel.set_corner_radius_all(14)
-	panel.content_margin_left = 7
-	panel.content_margin_top = 8
-	panel.content_margin_right = 7
-	panel.content_margin_bottom = 8
-	card.add_theme_stylebox_override("panel", panel)
+	# Sombra de contato simples.
+	var shadow := TextureRect.new()
+	shadow.texture = null
+	var shadow_rect := ColorRect.new()
+	shadow_rect.color = Color(0, 0, 0, 0.28)
+	shadow_rect.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	shadow_rect.offset_top = -12
+	shadow_rect.offset_bottom = 0
+	shadow_rect.offset_left = 18
+	shadow_rect.offset_right = -18
+	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow_rect.name = "ContactShadow"
+	actor.add_child(shadow_rect)
 
-	var column := VBoxContainer.new()
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 5)
-	card.add_child(column)
+	var portrait := TextureRect.new()
+	ArtHelper.configure_rect(portrait, _portrait_for(unit, is_ally), Vector2(ACTOR_W, ACTOR_H))
+	portrait.name = "Portrait"
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actor.add_child(portrait)
 
 	var target_badge := Label.new()
 	target_badge.name = "TargetBadge"
 	target_badge.text = Loc.t("battle.target")
-	target_badge.add_theme_font_size_override("font_size", 11)
+	target_badge.add_theme_font_size_override("font_size", 12)
 	target_badge.add_theme_color_override("font_color", Color(0.3, 0.91, 1.0))
+	target_badge.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.05, 0.95))
+	target_badge.add_theme_constant_override("outline_size", 4)
 	target_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target_badge.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	target_badge.offset_top = -22
+	target_badge.offset_bottom = -2
+	target_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	target_badge.visible = false
-	column.add_child(target_badge)
-
-	var portrait := TextureRect.new()
-	ArtHelper.configure_rect(portrait, _portrait_for(unit, is_ally), Vector2(PORTRAIT_SIZE, PORTRAIT_SIZE))
-	portrait.name = "Portrait"
-	portrait.pivot_offset = Vector2(PORTRAIT_SIZE * 0.5, PORTRAIT_SIZE * 0.5)
-	portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	column.add_child(portrait)
+	actor.add_child(target_badge)
 
 	var name_label := Label.new()
 	name_label.add_theme_font_size_override("font_size", 13)
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.94, 1.0))
+	name_label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.05, 0.95))
+	name_label.add_theme_constant_override("outline_size", 4)
 	name_label.text = str(unit.get("display_name", unit.get("id", "?")))
 	if not is_ally:
 		name_label.text += " #%d" % (unit_index + 1)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
-	column.add_child(name_label)
+	name_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	name_label.offset_top = 4
+	name_label.offset_bottom = 24
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actor.add_child(name_label)
 
 	var bar := ProgressBar.new()
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.custom_minimum_size = Vector2(0, 11)
+	bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	bar.offset_top = 26
+	bar.offset_bottom = 38
+	bar.offset_left = 10
+	bar.offset_right = -10
 	bar.show_percentage = false
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = Color(0.12, 0.88, 0.96) if is_ally else Color(0.98, 0.28, 0.36)
-	fill.set_corner_radius_all(5)
+	fill.set_corner_radius_all(4)
 	bar.add_theme_stylebox_override("fill", fill)
 	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.035, 0.045, 0.075)
-	background.set_corner_radius_all(5)
+	background.bg_color = Color(0.035, 0.045, 0.075, 0.75)
+	background.set_corner_radius_all(4)
 	bar.add_theme_stylebox_override("background", background)
-	column.add_child(bar)
+	actor.add_child(bar)
 
 	var hp_label := Label.new()
-	hp_label.add_theme_font_size_override("font_size", 12)
+	hp_label.add_theme_font_size_override("font_size", 11)
 	hp_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.94))
 	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(hp_label)
+	hp_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	hp_label.offset_top = 38
+	hp_label.offset_bottom = 54
+	hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actor.add_child(hp_label)
 
 	_rows["%s:%s" % [side, str(unit.get("id", ""))]] = {
 		"bar": bar,
 		"hp_label": hp_label,
 		"name_label": name_label,
 		"portrait": portrait,
-		"card": card,
-		"panel": panel,
+		"card": actor,
+		"panel": null,
 		"target_badge": target_badge,
 		"is_ally": is_ally,
-		"base_border_color": panel.border_color,
+		"base_border_color": Color.TRANSPARENT,
 	}
-	return card
+	return actor
 
 
 func _mark_current_enemy_target() -> void:
@@ -331,30 +364,34 @@ func _mark_current_enemy_target() -> void:
 		var is_target := String(enemy.get("id", "")) == target_id
 		var badge: Label = row["target_badge"]
 		badge.visible = is_target
-		var panel: StyleBoxFlat = row["panel"]
-		panel.border_color = Color(0.22, 0.86, 1.0, 0.95) if is_target else row["base_border_color"]
-		panel.set_border_width_all(3 if is_target else 1)
 
 
 func _portrait_for(unit: Dictionary, is_ally: bool) -> Texture2D:
 	if is_ally:
 		return ArtHelper.unit_texture(String(unit.get("id", "")))
-	var row := ContentDB.gate_row(_gate)
-	var art_key := "boss_art" if String(unit.get("role", "")) == "boss" else "enemy_art"
-	if row.has(art_key) and row[art_key] is String and not (row[art_key] as String).is_empty():
-		return ArtHelper.texture(str(row[art_key]))
-	return ArtHelper.enemy_texture(String(unit.get("role", "")) == "boss")
+	return ArtHelper.enemy_texture_for_gate(_gate, String(unit.get("role", "common")))
 
 
 func _animate_event(ev: Dictionary) -> void:
 	if String(ev.get("type", "")) == "skill":
-		# Postura de Guarda: sem dano; só destaca quem protege e atualiza fileiras.
+		if bool(ev.get("heal", false)):
+			var healed_row: Dictionary = _rows.get("ally:%s" % String(ev["target"].get("id", "")), {})
+			if not healed_row.is_empty():
+				var healed_portrait: TextureRect = healed_row["portrait"]
+				var heal_tween := _replace_node_tween(healed_portrait)
+				heal_tween.tween_property(healed_portrait, "scale", Vector2(1.12, 1.12), 0.12)
+				heal_tween.tween_property(healed_portrait, "scale", Vector2.ONE, 0.2)
+				_add_damage_popup(healed_portrait, int(ev.get("damage", 0)), false)
+			_skill_flash(Color(0.24, 0.92, 0.57, 0.18))
+			return
+		# A guarda é um buff, não um ataque: destaca o guardião e a equipe.
 		var guard_row: Dictionary = _rows.get(
 			"ally:%s" % String(ev["attacker"].get("id", "")), {}
 		)
 		if not guard_row.is_empty():
-			_animate_attacker(guard_row["portrait"], true)
-		_skill_flash()
+			var guard_portrait: TextureRect = guard_row["portrait"]
+			_animate_attacker(guard_portrait, guard_portrait.get_global_rect().get_center())
+		_skill_flash(Color(0.5, 0.34, 1.0, 0.18))
 		return
 	if String(ev.get("type", "")) != "attack":
 		if String(ev.get("outcome", "")) == "victory":
@@ -369,8 +406,8 @@ func _animate_event(ev: Dictionary) -> void:
 	var target_row: Dictionary = _rows.get(
 		"%s:%s" % [String(target.get("side", "")), String(target.get("id", ""))], {}
 	)
-	if not attacker_row.is_empty():
-		_animate_attacker(attacker_row["portrait"], String(attacker.get("side", "")) == "ally")
+	if not attacker_row.is_empty() and not target_row.is_empty():
+		_animate_attacker(attacker_row["portrait"], target_row["portrait"].get_global_rect().get_center())
 	if target_row.is_empty():
 		return
 
@@ -396,17 +433,19 @@ func _animate_event(ev: Dictionary) -> void:
 	_add_damage_popup(target_portrait, int(ev.get("damage", 0)), bool(ev.get("killed", false)), bool(ev.get("is_skill", false)))
 
 
-func _animate_attacker(portrait: TextureRect, is_ally: bool) -> void:
-	var direction := -1.0 if is_ally else 1.0
+func _animate_attacker(portrait: TextureRect, target_global_position: Vector2) -> void:
+	var origin := portrait.position
+	var current_center := portrait.get_global_rect().get_center()
+	var direction := signf(target_global_position.x - current_center.x)
 	var tween := _replace_node_tween(portrait)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(portrait, "rotation", 0.025 * direction, 0.09)
 	tween.parallel().tween_property(portrait, "scale", Vector2(1.1, 1.1), 0.09)
-	tween.parallel().tween_property(portrait, "position:x", portrait.position.x + direction * 10.0, 0.09)
+	tween.parallel().tween_property(portrait, "position:x", origin.x + direction * 10.0, 0.09)
 	tween.tween_property(portrait, "rotation", 0.0, 0.13)
 	tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 0.13)
-	tween.parallel().tween_property(portrait, "position:x", portrait.position.x, 0.13)
+	tween.parallel().tween_property(portrait, "position:x", origin.x, 0.13)
 
 
 func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool, is_skill: bool = false) -> void:
@@ -438,14 +477,14 @@ func _add_damage_popup(portrait: TextureRect, damage: int, killed: bool, is_skil
 	tween.chain().tween_callback(popup.queue_free)
 
 
-func _skill_flash() -> void:
+func _skill_flash(color: Color = Color(0.3, 0.91, 1.0, 0.14)) -> void:
 	var flash := ColorRect.new()
-	flash.color = Color(0.3, 0.91, 1.0, 0.0)
+	flash.color = Color(color.r, color.g, color.b, 0.0)
 	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fx_layer.add_child(flash)
 	var tween := create_tween()
-	tween.tween_property(flash, "color:a", 0.14, 0.06)
+	tween.tween_property(flash, "color:a", color.a, 0.06)
 	tween.tween_property(flash, "color:a", 0.0, 0.22)
 	tween.chain().tween_callback(flash.queue_free)
 
