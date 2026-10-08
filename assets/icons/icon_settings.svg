@@ -1,21 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
   <defs>
     <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="50%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
+      <stop offset="0%" stop-color="#e0f7ff"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
     </linearGradient>
   </defs>
-  <rect width="96" height="96" rx="20" fill="#0b0d19" />
-  <!-- Hexagonal Tech ring -->
-  <polygon points="48,16 75,32 75,64 48,80 21,64 21,32" fill="none" stroke="url(#gearGrad)" stroke-width="4.5"/>
-  <polygon points="48,24 68,36 68,60 48,72 28,60 28,36" fill="#111827" stroke="#334155" stroke-width="2"/>
-  <!-- Cog teeth / brackets -->
-  <rect x="44" y="10" width="8" height="10" rx="2" fill="#38bdf8"/>
-  <rect x="44" y="76" width="8" height="10" rx="2" fill="#38bdf8"/>
-  <rect x="13" y="44" width="10" height="8" rx="2" fill="#6366f1"/>
-  <rect x="73" y="44" width="10" height="8" rx="2" fill="#6366f1"/>
-  <!-- Inner core -->
-  <circle cx="48" cy="48" r="10" fill="#0f172a" stroke="#00f0ff" stroke-width="2.5"/>
-  <circle cx="48" cy="48" r="4" fill="#00f0ff"/>
+  <!-- Engrenagem sem moldura: silhueta com furo central transparente (sem quadrado de fundo). -->
+  <path fill-rule="evenodd" fill="url(#gearGrad)" stroke="#0ea5e9" stroke-width="2" stroke-linejoin="round"
+        d="M39.18,17.24 L41.74,8.49 L54.26,8.49 L56.82,17.24 L63.51,20.01 L71.51,15.64 L80.36,24.49 L75.99,32.49 L78.76,39.18 L87.51,41.74 L87.51,54.26 L78.76,56.82 L75.99,63.51 L80.36,71.51 L71.51,80.36 L63.51,75.99 L56.82,78.76 L54.26,87.51 L41.74,87.51 L39.18,78.76 L32.49,75.99 L24.49,80.36 L15.64,71.51 L20.01,63.51 L17.24,56.82 L8.49,54.26 L8.49,41.74 L17.24,39.18 L20.01,32.49 L15.64,24.49 L24.49,15.64 L32.49,20.01 Z M35.00,48.00 a13.00,13.00 0 1,0 26.00,0 a13.00,13.00 0 1,0 -26.00,0 Z"/>
 </svg>

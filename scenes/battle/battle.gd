@@ -1,5 +1,7 @@
 extends Control
-## Combate visual: retratos, barras de vida e feedback animado de ações.
+## Combate visual: personagens livres sobre a arena (sem cartões nem caixas),
+## formação 6×6 (até 6 caçadores contra até 6 monstros, 2 colunas × 3 fileiras
+## por lado), barras de vida e feedback animado de ações.
 ##
 ## A velocidade só altera a apresentação (frequência de passos); os cálculos
 ## vêm do CombatService e são determinísticos (spec §4/§10.5). A batalha é
@@ -7,29 +9,31 @@ extends Control
 ## O fim da batalha encaminha para o resultado; só aí se credita recompensa.
 
 const ArtHelper = preload("res://scripts/ui/art_helper.gd")
+const CombatantShadow = preload("res://scenes/battle/combatant_shadow.gd")
 const STEP_SECONDS := 0.45
-const ACTOR_W := 140.0
-const ACTOR_H := 210.0
+## Altura-alvo da figura de combate (escala de personagem, não miniatura).
+const PORTRAIT_SIZE := 250.0
+## Largura máxima de uma figura: com duas colunas por lado num celular de 720 px,
+## figuras mais largas que isso se encostariam no centro da arena.
+const SPRITE_MAX_W := 160.0
+const ACTOR_W := 200.0
+## Espaço abaixo dos pés para o nome, a barra de vida e o texto de HP.
+const FEET_ROOM := 74.0
+const BOSS_SCALE := 1.08
+const FORMATION_TOP := 18.0
+## Colunas dos caçadores (fração da largura do lado): [externa, interna].
+## Monstros usam o espelho, então as duas linhas de frente ficam simétricas.
+const COLUMN_FRACTIONS := [0.21, 0.74]
 const DEAD_MODULATE := Color(0.46, 0.49, 0.58, 0.52)
 const DEAD_SCALE := Vector2(0.72, 0.72)
 
-# Slots 2×3 por lado, livres sobre a arena (sem cards).
-# Cada slot: [x_pct, y_pct] no viewport 720×1280.
-const ALLY_SLOTS := [
-	Vector2(0.12, 0.38), Vector2(0.32, 0.38),
-	Vector2(0.12, 0.58), Vector2(0.32, 0.58),
-	Vector2(0.12, 0.78), Vector2(0.32, 0.78),
-]
-const ENEMY_SLOTS := [
-	Vector2(0.68, 0.38), Vector2(0.88, 0.38),
-	Vector2(0.68, 0.58), Vector2(0.88, 0.58),
-	Vector2(0.68, 0.78), Vector2(0.88, 0.78),
-]
-
 @onready var title_label: Label = $Margin/VBox/TitleLabel
 @onready var wave_label: Label = $Margin/VBox/WaveLabel
-@onready var enemies_box: GridContainer = $Margin/VBox/BattleRow/MonstersSide/EnemiesBox
-@onready var allies_box: GridContainer = $Margin/VBox/BattleRow/HuntersSide/AlliesBox
+@onready var allies_caption: Label = $Margin/VBox/Stage/AlliesCaption
+@onready var enemies_caption: Label = $Margin/VBox/Stage/EnemiesCaption
+@onready var allies_box: Control = $Margin/VBox/Stage/AlliesBox
+@onready var enemies_box: Control = $Margin/VBox/Stage/EnemiesBox
+@onready var clash_label: Label = $Margin/VBox/ClashBanner/ClashLabel
 @onready var log_label: Label = $Margin/VBox/LogPanel/LogLabel
 @onready var pause_button: Button = $Margin/VBox/Controls/PauseButton
 @onready var speed_button: Button = $Margin/VBox/Controls/SpeedButton
@@ -44,22 +48,24 @@ var _paused: bool = false
 var _speed: int = 1
 var _finished: bool = false
 var _displayed_wave_index: int = -1
-## chave "lado:id" -> { "bar", "hp_label", "name_label" }
+## chave "lado:id" -> { "bar", "hp_label", "name_label", "portrait", "card", ... }
 var _rows: Dictionary = {}
 var _node_tweens: Dictionary = {}
 
 
 func _ready() -> void:
 	title_label.text = Loc.t("battle.title")
-	$Margin/VBox/BattleRow/MonstersSide/EnemiesTitle.text = Loc.t("battle.enemies")
-	$Margin/VBox/BattleRow/HuntersSide/AlliesTitle.text = Loc.t("battle.allies")
-	$Margin/VBox/ClashBanner/ClashLabel.text = Loc.t("battle.confrontation")
+	allies_caption.text = Loc.t("battle.allies")
+	enemies_caption.text = Loc.t("battle.enemies")
+	clash_label.text = Loc.t("battle.confrontation")
 	pause_button.text = Loc.t("battle.pause")
 	exit_hint.text = Loc.t("battle.exit_hint")
 	exit_button.text = Loc.t("ui.exit_battle")
 	pause_button.pressed.connect(_on_pause)
 	speed_button.pressed.connect(_on_speed)
 	exit_button.pressed.connect(_on_exit)
+	allies_box.resized.connect(_layout_actors)
+	enemies_box.resized.connect(_layout_actors)
 
 
 ## Chamado pela navegação antes de mostrar o overlay: inicia uma batalha nova.
@@ -233,87 +239,68 @@ func _on_exit() -> void:
 func _build_rows() -> void:
 	_rows.clear()
 	_displayed_wave_index = int(_state.get("wave_index", 0))
-	# Remove atores antigos (não toca em FxLayer).
-	for child in get_children():
-		if child.has_meta("actor"):
-			remove_child(child)
-			child.queue_free()
+	_clear_box(allies_box)
+	_clear_box(enemies_box)
 	for i in _state["enemies"].size():
-		add_child(_make_actor("enemy", _state["enemies"][i], false, i))
+		enemies_box.add_child(_make_actor("enemy", _state["enemies"][i], false, i))
 	for i in _state["allies"].size():
-		add_child(_make_actor("ally", _state["allies"][i], true, i))
+		allies_box.add_child(_make_actor("ally", _state["allies"][i], true, i))
+	_layout_actors()
+
+
+func _clear_box(box: Control) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
 
 
 func _make_actor(side: String, unit: Dictionary, is_ally: bool, unit_index: int) -> Control:
-	var slots := ALLY_SLOTS if is_ally else ENEMY_SLOTS
-	var slot: Vector2 = slots[unit_index % slots.size()]
-	var vp := Vector2(720, 1280)
-
 	var actor := Control.new()
+	actor.name = "%s%d" % [side.capitalize(), unit_index + 1]
 	actor.set_meta("actor", true)
 	actor.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	actor.position = Vector2(slot.x * vp.x - ACTOR_W * 0.5, slot.y * vp.y - ACTOR_H * 0.5)
-	actor.size = Vector2(ACTOR_W, ACTOR_H)
 
-	# Sombra de contato simples.
-	var shadow := TextureRect.new()
-	shadow.texture = null
-	var shadow_rect := ColorRect.new()
-	shadow_rect.color = Color(0, 0, 0, 0.28)
-	shadow_rect.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	shadow_rect.offset_top = -12
-	shadow_rect.offset_bottom = 0
-	shadow_rect.offset_left = 18
-	shadow_rect.offset_right = -18
-	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow_rect.name = "ContactShadow"
-	actor.add_child(shadow_rect)
+	# Sombra elíptica desenhada (sem retângulo) fica atrás da figura.
+	var shadow := CombatantShadow.new()
+	shadow.name = "ContactShadow"
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actor.add_child(shadow)
 
 	var portrait := TextureRect.new()
-	ArtHelper.configure_rect(portrait, _portrait_for(unit, is_ally), Vector2(ACTOR_W, ACTOR_H))
 	portrait.name = "Portrait"
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
+	portrait.texture = _figure_for(unit, is_ally)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_SCALE
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	actor.add_child(portrait)
 
 	var target_badge := Label.new()
 	target_badge.name = "TargetBadge"
 	target_badge.text = Loc.t("battle.target")
-	target_badge.add_theme_font_size_override("font_size", 12)
+	target_badge.add_theme_font_size_override("font_size", 13)
 	target_badge.add_theme_color_override("font_color", Color(0.3, 0.91, 1.0))
 	target_badge.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.05, 0.95))
-	target_badge.add_theme_constant_override("outline_size", 4)
-	target_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	target_badge.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	target_badge.offset_top = -22
-	target_badge.offset_bottom = -2
+	target_badge.add_theme_constant_override("outline_size", 5)
+	target_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	target_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	target_badge.visible = false
 	actor.add_child(target_badge)
 
 	var name_label := Label.new()
-	name_label.add_theme_font_size_override("font_size", 13)
-	name_label.add_theme_color_override("font_color", Color(0.9, 0.94, 1.0))
+	name_label.name = "NameLabel"
+	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
 	name_label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.05, 0.95))
-	name_label.add_theme_constant_override("outline_size", 4)
+	name_label.add_theme_constant_override("outline_size", 5)
 	name_label.text = str(unit.get("display_name", unit.get("id", "?")))
 	if not is_ally:
 		name_label.text += " #%d" % (unit_index + 1)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.clip_text = true
-	name_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	name_label.offset_top = 4
-	name_label.offset_bottom = 24
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	actor.add_child(name_label)
 
 	var bar := ProgressBar.new()
-	bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	bar.offset_top = 26
-	bar.offset_bottom = 38
-	bar.offset_left = 10
-	bar.offset_right = -10
+	bar.name = "HpBar"
 	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := StyleBoxFlat.new()
@@ -321,33 +308,119 @@ func _make_actor(side: String, unit: Dictionary, is_ally: bool, unit_index: int)
 	fill.set_corner_radius_all(4)
 	bar.add_theme_stylebox_override("fill", fill)
 	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.035, 0.045, 0.075, 0.75)
+	background.bg_color = Color(0.02, 0.03, 0.06, 0.6)
 	background.set_corner_radius_all(4)
 	bar.add_theme_stylebox_override("background", background)
 	actor.add_child(bar)
 
 	var hp_label := Label.new()
-	hp_label.add_theme_font_size_override("font_size", 11)
-	hp_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.94))
+	hp_label.name = "HpLabel"
+	hp_label.add_theme_font_size_override("font_size", 12)
+	hp_label.add_theme_color_override("font_color", Color(0.8, 0.88, 0.98))
+	hp_label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.05, 0.95))
+	hp_label.add_theme_constant_override("outline_size", 4)
 	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hp_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	hp_label.offset_top = 38
-	hp_label.offset_bottom = 54
 	hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	actor.add_child(hp_label)
 
+	var role := String(unit.get("role", "common"))
 	_rows["%s:%s" % [side, str(unit.get("id", ""))]] = {
 		"bar": bar,
 		"hp_label": hp_label,
 		"name_label": name_label,
 		"portrait": portrait,
 		"card": actor,
-		"panel": null,
+		"shadow": shadow,
 		"target_badge": target_badge,
 		"is_ally": is_ally,
-		"base_border_color": Color.TRANSPARENT,
+		"is_boss": not is_ally and role == "boss",
 	}
 	return actor
+
+
+func _figure_for(unit: Dictionary, is_ally: bool) -> Texture2D:
+	return ArtHelper.figure_texture(_portrait_for(unit, is_ally))
+
+
+## Formação 6×6 em palco livre. Todos os combatentes de um lado usam a mesma
+## escala, definida pela fileira mais alta entre os dois lados; um lado com
+## menos fileiras fica centralizado verticalmente.
+func _layout_actors() -> void:
+	if _state.is_empty() or allies_box.size.x <= 0.0 or allies_box.size.y <= 0.0:
+		return
+	var rows_max := maxi(_row_count(_state["allies"].size()), _row_count(_state["enemies"].size()))
+	var slot_h := (allies_box.size.y - FORMATION_TOP * 2.0) / float(rows_max)
+	var sprite_h := clampf(minf(PORTRAIT_SIZE, slot_h - FEET_ROOM), 96.0, PORTRAIT_SIZE)
+	# O boss só cresce se a fileira tiver folga; senão a cabeça invade a fileira de cima.
+	var boss_scale := BOSS_SCALE if slot_h - FEET_ROOM >= sprite_h * BOSS_SCALE else 1.0
+	for side in ["ally", "enemy"]:
+		var is_ally: bool = side == "ally"
+		var units: Array = _state["allies"] if is_ally else _state["enemies"]
+		var side_box: Control = allies_box if is_ally else enemies_box
+		var y_offset := float(rows_max - _row_count(units.size())) * slot_h * 0.5
+		for i in units.size():
+			var row: Dictionary = _rows.get("%s:%s" % [side, str(units[i].get("id", ""))], {})
+			if row.is_empty():
+				continue
+			var feet := _feet_point(i, units.size(), side_box.size, slot_h, sprite_h, y_offset, is_ally)
+			var figure_scale := boss_scale if bool(row.get("is_boss", false)) else 1.0
+			_place_actor(row, feet, sprite_h, figure_scale)
+
+
+func _row_count(units: int) -> int:
+	return maxi(1, ceili(units / 2.0))
+
+
+func _feet_point(index: int, count: int, side_size: Vector2, slot_h: float, sprite_h: float, y_offset: float, is_ally: bool) -> Vector2:
+	var row := floori(index / 2.0)
+	var row_units := mini(2, count - row * 2)
+	var column := index % 2
+	var fraction := float(COLUMN_FRACTIONS[column]) if is_ally else 1.0 - float(COLUMN_FRACTIONS[1 - column])
+	var x := side_size.x * 0.5
+	if row_units == 2:
+		x = side_size.x * fraction
+	var block_h := sprite_h + FEET_ROOM
+	var slot_top := FORMATION_TOP + y_offset + float(row) * slot_h
+	var block_top := slot_top + (slot_h - block_h) * 0.5
+	return Vector2(x, block_top + sprite_h)
+
+
+## Posiciona um combatente com os pés em `feet`. Tudo é relativo ao ator, que
+## tem a mesma altura do palco ocupado pela figura mais a faixa de texto.
+func _place_actor(row: Dictionary, feet: Vector2, sprite_h: float, figure_scale: float) -> void:
+	var actor: Control = row["card"]
+	var portrait: TextureRect = row["portrait"]
+	var shadow: Control = row["shadow"]
+	var figure := Vector2(sprite_h * 0.6, sprite_h)
+	var source: Texture2D = portrait.texture
+	if source != null and source.get_size().x > 0.0 and source.get_size().y > 0.0:
+		var natural := source.get_size()
+		var factor := minf(sprite_h * figure_scale / natural.y, SPRITE_MAX_W * figure_scale / natural.x)
+		figure = natural * factor
+	actor.size = Vector2(ACTOR_W, sprite_h + FEET_ROOM)
+	actor.position = feet - Vector2(ACTOR_W * 0.5, sprite_h)
+	portrait.size = figure
+	portrait.position = Vector2((ACTOR_W - figure.x) * 0.5, sprite_h - figure.y)
+	portrait.pivot_offset = Vector2(figure.x * 0.5, figure.y)
+	var shadow_w := clampf(figure.x * 0.92, 64.0, 180.0)
+	shadow.size = Vector2(shadow_w, 18.0)
+	shadow.position = Vector2((ACTOR_W - shadow_w) * 0.5, sprite_h - 9.0)
+	shadow.queue_redraw()
+	var name_label: Label = row["name_label"]
+	name_label.position = Vector2(0.0, sprite_h + 6.0)
+	name_label.size = Vector2(ACTOR_W, 20.0)
+	# O marcador de alvo fica na linha do nome, ao lado dele: não usa a faixa
+	# vertical da fileira de cima (onde ficam as barras de vida).
+	var badge: Label = row["target_badge"]
+	var name_width := name_label.get_minimum_size().x
+	badge.position = Vector2(ACTOR_W * 0.5 + name_width * 0.5 + 6.0, sprite_h + 6.0)
+	badge.size = Vector2(60.0, 20.0)
+	var bar: ProgressBar = row["bar"]
+	bar.position = Vector2((ACTOR_W - 120.0) * 0.5, sprite_h + 30.0)
+	bar.size = Vector2(120.0, 8.0)
+	var hp_label: Label = row["hp_label"]
+	hp_label.position = Vector2(0.0, sprite_h + 40.0)
+	hp_label.size = Vector2(ACTOR_W, 16.0)
 
 
 func _mark_current_enemy_target() -> void:

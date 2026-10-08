@@ -18,8 +18,8 @@ static func run(t: Node) -> void:
 	var hub_ui: Control = portal_screen.get_node_or_null("HubPresentation") as Control
 	t.check(hub_ui != null, "hub usa composição espacial dedicada aos hotspots dos mockups")
 	if hub_ui != null:
-		var portal_hotspot := hub_ui.get_node_or_null("PortalPanel/PortalContent/PortalHotspot") as Button
-		var shop_hotspot := hub_ui.get_node_or_null("ShopHotspotPanel/StoreHotspot") as Button
+		var portal_hotspot := hub_ui.get_node_or_null("PortalPanel/PortalContent/PortalHotspot") as BaseButton
+		var shop_hotspot := hub_ui.get_node_or_null("ShopHotspotPanel/StoreHotspot") as BaseButton
 		var map_button := hub_ui.get_node_or_null("PortalPanel/PortalContent/ViewPortalsButton") as Button
 		t.check(portal_hotspot != null and shop_hotspot != null and map_button != null,
 			"hub expõe portal, loja e seletor como ações separadas")

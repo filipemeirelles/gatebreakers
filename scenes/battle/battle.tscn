@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1_battle"]
 [ext_resource type="Texture2D" path="res://assets/battle/arena_backdrop.jpg" id="2_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/skills/skill_dagger.svg" id="3_dagger"]
+
+[sub_resource type="StyleBoxEmpty" id="LogPanelStyle"]
 
 [node name="Battle" type="Control"]
 layout_mode = 3
@@ -33,7 +35,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.018, 0.025, 0.055, 0.36)
+color = Color(0.018, 0.025, 0.055, 0.3)
+mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -49,11 +52,13 @@ theme_override_constants/margin_bottom = 22
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="TitleLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.486, 0.247, 0.949, 1)
+theme_override_colors/font_color = Color(0.72, 0.6, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 25
 text = "Combate"
 horizontal_alignment = 1
@@ -61,51 +66,56 @@ horizontal_alignment = 1
 [node name="WaveLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 18
 text = "Onda 1 / 3"
 horizontal_alignment = 1
 
-[node name="BattleRow" type="HBoxContainer" parent="Margin/VBox"]
+[node name="Stage" type="Control" parent="Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+mouse_filter = 2
 
-[node name="HuntersSide" type="VBoxContainer" parent="Margin/VBox/BattleRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="AlliesTitle" type="Label" parent="Margin/VBox/BattleRow/HuntersSide"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
-theme_override_font_sizes/font_size = 13
+[node name="AlliesCaption" type="Label" parent="Margin/VBox/Stage"]
+layout_mode = 1
+anchor_right = 0.5
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.86, 0.9, 0.97, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 17
 text = "Caçadores"
+horizontal_alignment = 1
+mouse_filter = 2
 
-[node name="AlliesBox" type="GridContainer" parent="Margin/VBox/BattleRow/HuntersSide"]
-layout_mode = 2
-size_flags_vertical = 3
-columns = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-
-[node name="MonstersSide" type="VBoxContainer" parent="Margin/VBox/BattleRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="EnemiesTitle" type="Label" parent="Margin/VBox/BattleRow/MonstersSide"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
-theme_override_font_sizes/font_size = 13
+[node name="EnemiesCaption" type="Label" parent="Margin/VBox/Stage"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 1.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.86, 0.9, 0.97, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 17
 text = "Monstros/Inimigos"
-horizontal_alignment = 2
+horizontal_alignment = 1
+mouse_filter = 2
 
-[node name="EnemiesBox" type="GridContainer" parent="Margin/VBox/BattleRow/MonstersSide"]
-layout_mode = 2
-size_flags_vertical = 3
-columns = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+[node name="AlliesBox" type="Control" parent="Margin/VBox/Stage"]
+layout_mode = 1
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = 30.0
+mouse_filter = 2
+
+[node name="EnemiesBox" type="Control" parent="Margin/VBox/Stage"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 30.0
+mouse_filter = 2
 
 [node name="ClashBanner" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
@@ -116,17 +126,21 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(80, 2)
 layout_mode = 2
 color = Color(0.216, 0.878, 1, 0.55)
+mouse_filter = 2
 
 [node name="ClashIcon" type="TextureRect" parent="Margin/VBox/ClashBanner"]
 custom_minimum_size = Vector2(38, 38)
 layout_mode = 2
 texture = ExtResource("3_dagger")
 expand_mode = 1
-stretch_mode = 6
+stretch_mode = 5
+mouse_filter = 2
 
 [node name="ClashLabel" type="Label" parent="Margin/VBox/ClashBanner"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.216, 0.878, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text = "CONFRONTO"
 
@@ -134,16 +148,20 @@ text = "CONFRONTO"
 custom_minimum_size = Vector2(80, 2)
 layout_mode = 2
 color = Color(0.486, 0.247, 0.949, 0.65)
+mouse_filter = 2
 
 [node name="LogPanel" type="PanelContainer" parent="Margin/VBox"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LogPanelStyle")
 
 [node name="LogLabel" type="Label" parent="Margin/VBox/LogPanel"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 15
-text = "A equipe se prepara para lutar."
+text = "Prepare-se!"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -153,29 +171,31 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="PauseButton" type="Button" parent="Margin/VBox/Controls"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 56)
 theme_override_font_sizes/font_size = 20
 text = "Pausar"
 
 [node name="SpeedButton" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
 custom_minimum_size = Vector2(132, 56)
+layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "x1"
 
 [node name="ExitHintLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_colors/font_color = Color(0.72, 0.76, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.05, 0.95)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
 text = "Sair não concede recompensa."
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="ExitButton" type="Button" parent="Margin/VBox"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Sair"
 

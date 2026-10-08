@@ -41,9 +41,12 @@ static func run(t: Node) -> void:
 	var ally_row: Dictionary = battle._rows["ally:%s" % first_ally_id]
 	t.check(ally_row["portrait"] is TextureRect and ally_row["portrait"].texture != null,
 		"aliado recebe retrato definido nos dados da unidade")
-	var ally_panel: StyleBoxFlat = ally_row["panel"]
-	t.check(ally_panel.bg_color.a <= 0.01 and ally_panel.border_color.a <= 0.01,
-		"combatentes aparecem sem cartões opacos individuais")
+	var ally_card: Control = ally_row["card"]
+	var has_card_background := false
+	for child in ally_card.get_children():
+		if child is PanelContainer or child is ColorRect or child is NinePatchRect:
+			has_card_background = true
+	t.check(not has_card_background, "combatentes aparecem sem cartões opacos individuais")
 	t.check(battle.PORTRAIT_SIZE >= 128, "retrato de combate usa escala de personagem, não miniatura")
 	battle._advance()
 	t.check(not battle.log_label.text.is_empty(), "primeiro golpe atualiza feedback da batalha")

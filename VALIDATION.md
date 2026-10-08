@@ -138,5 +138,28 @@ O APK v0.3 está instalado e aberto; teste de tela realizado no aparelho. O buil
 - A atualização foi instalada sem desinstalar o app nem solicitar limpeza de dados. Não abri o jogo nem rodei smoke visual no celular nesta sessão; o playtest do proprietário continua pendente.
 - O APK fica abaixo do limite de 50 MiB do anexo do Telegram. O preset local ignora fontes `assets_gen`, mockups, testes e build output para evitar empacotar material de desenvolvimento.
 
+## Segunda fatia visual (sem versão instalada)
 
+**Base:** `main` 9831466 (v0.7.0) · **Dispositivo:** não usado nesta fatia · **Playtest do proprietário:** pendente
 
+### Alterações desta fatia
+
+- Hub (`scenes/ui/portal_map.tscn/.gd`): perfil circular com o rosto de Jinwoo no canto superior esquerdo; portal e loja são imagens clicáveis com nome embaixo, sem botões quadrados, e só a área visível da imagem responde ao toque; engrenagem de Configurações volta a ficar acessível no canto superior direito.
+- Batalha (`scenes/battle/battle.tscn/.gd`, `combatant_shadow.gd`): personagens livres sobre a arena, sem cartões nem barras de fundo; formação 6×6 (2 colunas × 3 fileiras por lado) com escala comum às duas linhas de frente; sombra elíptica desenhada; legendas "Caçadores" e "Monstros/Inimigos"; marcador ALVO na linha do nome.
+- Artes: `assets/ui/hub_portal_gate.png` (vórtice), `assets/ui/hub_shop_stall.png` (fachada), `assets/ui/profile_avatar.png` (medalhão); brutos em `assets_gen/`; engrenagem `icon_settings.svg` sem moldura.
+- Recorte: `ArtHelper.figure_texture()` usa só a área visível da arte, com cache por caminho.
+
+### Verificações concluídas
+
+- Importação Godot (`--import`) sem erros; `.import` e `.uid` dos arquivos novos versionados.
+- Suíte headless em cópia isolada: **525 passaram, 0 falharam**, exit 0. Linha de base do HEAD: 438 passaram e 10 falharam, pois os testes de hub e batalha já descreviam este layout.
+- Smoke headless (`--quit-after 120`): exit 0.
+- Geometria headless em 720×1280 e 720×1600 (equivalente a 20:9): nenhuma sobreposição entre os elementos do hub; batalhas 2×2, 3×3 e 6×6 sem colisão entre figuras, nomes, barras e marcador de alvo; nenhuma figura fora da tela.
+- Interação headless (sinais dos botões): engrenagem abre Configurações; portal abre a preparação; loja abre a loja; perfil abre a ficha. A máscara de toque rejeita os cantos transparentes e aceita o centro das imagens.
+- Prévia aproximada (ImageMagick) com as posições medidas, para conferir composição do hub e da batalha 6×6.
+
+### Não verificado nesta fatia
+
+- Aparência real no aparelho: textos sobre o fundo, sombras, serrilhado das figuras reduzidas (as artes de 1024 px não têm mipmaps) e toque real pelo dispositivo.
+- `hub_background.png` ainda pinta quatro portais, que podem parecer tocáveis; regenerar o fundo é geração paga e depende de confirmação.
+- Barra inferior do hub (imagens com nome em vez de botões quadrados) fica para a próxima rodada, conforme pedido pelo proprietário.
