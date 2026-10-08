@@ -10,7 +10,7 @@ extends RefCounted
 const SAVE_PATH := "user://save_v1.json"
 const TMP_PATH := "user://save_v1.json.tmp"
 const CORRUPT_BACKUP_PATH := "user://save_v1.corrupt.json"
-const SCHEMA_VERSION: int = 3
+const SCHEMA_VERSION: int = 4
 
 ## Resultado do último load: { status, state, backup_path }
 static var last_result: Dictionary = {}
@@ -26,6 +26,8 @@ static func save_state(state: Dictionary) -> bool:
 	payload["hunter_formation"] = payload.get("hunter_formation", [])
 	payload["sweep_charges"] = payload.get("sweep_charges", {})
 	payload["sweep_grant_done"] = bool(payload.get("sweep_grant_done", true))
+	payload["inventory"] = payload.get("inventory", [])
+	payload["equipped"] = payload.get("equipped", {})
 	var text := JSON.stringify(payload)
 	if JSON.parse_string(text) == null:
 		push_error("SaveService: serialização inválida, save não gravado.")
@@ -102,6 +104,8 @@ static func _fresh_state() -> Dictionary:
 		"hunter_formation": [],
 		"sweep_charges": {},
 		"sweep_grant_done": true,
+		"inventory": [],
+		"equipped": {},
 	}
 
 
@@ -248,6 +252,43 @@ static func validate_state(data: Variant) -> Dictionary:
 		if entry is String and roster.has(entry) and bool(roster[entry]["unlocked"]) and entry != "jinwoo":
 			formation.append(entry)
 	formation.resize(mini(formation.size(), GameState.MAX_TEAM_SIZE))
+
+	# Inventário e Equipamentos (schema v4):
+	var inventory: Array = []
+	var equipped: Dictionary = {}
+	if source_schema >= 4:
+		var inv_raw: Variant = d.get("inventory", [])
+		if not (inv_raw is Array):
+			return {}
+		for item_id in inv_raw:
+			if item_id is String and ContentDB.item(String(item_id)).has("id"):
+				if not inventory.has(String(item_id)):
+					inventory.append(String(item_id))
+		var eq_raw: Variant = d.get("equipped", {})
+		if not (eq_raw is Dictionary):
+			return {}
+		for uid in eq_raw:
+			var slots: Variant = eq_raw[uid]
+			if slots is Dictionary:
+				var w: Variant = slots.get("weapon", "")
+				var a: Variant = slots.get("accessory", "")
+				equipped[String(uid)] = {
+					"weapon": String(w) if w is String and inventory.has(String(w)) else "",
+					"accessory": String(a) if a is String and inventory.has(String(a)) else "",
+				}
+	else:
+		# Migração para v4: concede equipamentos dos portais já concluídos.
+		var highest := int(d.get("highest_gate_cleared", 0))
+		for g in range(1, highest + 1):
+			var grow := ContentDB.gate_row(g)
+			var drop := str(grow.get("first_clear_drop_item", ""))
+			if not drop.is_empty() and not inventory.has(drop):
+				inventory.append(drop)
+		if inventory.has("kasaka_fang"):
+			equipped["jinwoo"] = { "weapon": "kasaka_fang", "accessory": "" }
+		elif inventory.has("dagger_goblin"):
+			equipped["jinwoo"] = { "weapon": "dagger_goblin", "accessory": "" }
+
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"hunter_level": hunter_level,
@@ -266,6 +307,8 @@ static func validate_state(data: Variant) -> Dictionary:
 		"hunter_formation": hunter_formation,
 		"sweep_charges": sweep_charges,
 		"sweep_grant_done": sweep_grant_done,
+		"inventory": inventory,
+		"equipped": equipped,
 	}
 
 

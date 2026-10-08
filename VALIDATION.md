@@ -67,3 +67,25 @@ O APK v0.3 está instalado e aberto; teste de tela realizado no aparelho. O buil
 - Export Android: exit 0, APK assinado com sucesso.
 - Interface alinhada aos mockups: Hub com fundo e cabeçalho (Perfil, Loja, Config), combate em grid de duas colunas (Aliados vs Inimigos), e 5 abas na navegação inferior.
 
+## v0.5.1 — sistema de equipamentos e inventário
+
+**Data:** 07/10/2026
+
+**Build:** `0.5.1` (Android `versionCode=5`), Godot 4.7.2, APK debug `build/gatebreakers-debug.apk`
+
+### Verificações concluídas
+
+- Suíte Godot headless: **419 passaram, 0 falharam**, exit 0.
+- Nova cobertura `test_items` (49 asserções novas):
+  - Definições de equipamentos em `data/items/items.json`: slots arma e acessório, ranks E a S, bônus de ATK, DEF e HP.
+  - Gestão de inventário e unicidade de itens no `GameState`.
+  - Equipar, desequipar e transferir armas e acessórios entre Sung Jinwoo e caçadores contratados (ex: Yoo Jinho).
+  - Bônus de atributos aplicados em tempo real aos combatentes e refletidos no poder de combate da equipe (`team_power()`).
+  - Drop determinístico na primeira vitória em portais de chefes (ex: *Adaga de Goblin* no Portal 1, *Presa de Kasaka* no Portal 2). Repetições não duplicam itens.
+  - Card pós-batalha (`battle_result.gd`) agora apresenta o item conquistado com destaque dourado (`result.item_dropped`), concretizando a promessa de `mockupcardbatalhas.png`.
+  - Migração de save automática para schema v4 (`SaveService.SCHEMA_VERSION = 4`): concede itens dos portais já concluídos e auto-equipa arma no Jinwoo.
+  - Red dot da aba "Itens": ativado automaticamente quando há item livre na mochila e combatente com slot vazio.
+- Smoke headless (`godot --headless --path . --quit-after 120`): exit 0.
+- Export Android: exit 0, APK assinado com sucesso.
+
+

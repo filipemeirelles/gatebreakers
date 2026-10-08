@@ -38,3 +38,4 @@ func _run_all() -> void:
 	Fase5Tests.run(self)
 	SkillTests.run(self)
 	HunterTests.run(self)
+	ItemTests.run(self)

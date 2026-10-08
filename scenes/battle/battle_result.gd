@@ -52,10 +52,21 @@ func configure(data: Dictionary) -> void:
 	)
 
 	if victory:
-		# Itens ganhos: área reservada (inventário é uma fase futura aprovada).
-		items_label.text = Loc.t("result.items")
-		items_label.visible = true
 		var rewards: Dictionary = data.get("rewards", {})
+		var item_drop_id := str(rewards.get("item_drop", ""))
+		if not item_drop_id.is_empty():
+			var item_def := ContentDB.item(item_drop_id)
+			if not item_def.is_empty():
+				items_label.text = Loc.t("result.item_dropped") % [
+					str(item_def.get("display_name", item_drop_id)),
+					str(item_def.get("rank", ""))
+				]
+				items_label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.3, 1.0))
+			else:
+				items_label.text = Loc.t("result.items")
+		else:
+			items_label.text = Loc.t("result.items")
+		items_label.visible = true
 		gold_amount.text = "+%d" % int(rewards.get("gold", 0))
 		xp_amount.text = "+%d" % int(rewards.get("xp", 0))
 		var essence := int(rewards.get("essence", 0))

@@ -63,8 +63,6 @@ hint_key = "locked.hint"
 
 [node name="Items" parent="Screens" instance=ExtResource("14_items")]
 visible = false
-title_key = "ui.tab.items"
-hint_key = "locked.hint"
 
 [node name="Missions" parent="Screens" instance=ExtResource("15_missions")]
 visible = false

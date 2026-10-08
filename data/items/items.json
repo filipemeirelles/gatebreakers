@@ -1,0 +1,114 @@
+{
+  "items": [
+    {
+      "id": "dagger_goblin",
+      "display_name": "Adaga de Goblin",
+      "slot": "weapon",
+      "rank": "E",
+      "attack_bonus": 5,
+      "defense_bonus": 0,
+      "hp_bonus": 15,
+      "description": "Uma lâmina simples de aço enferrujado recolhida na Masmorra dos Goblins.",
+      "icon": "res://assets/skills/skill_dagger.svg"
+    },
+    {
+      "id": "kasaka_fang",
+      "display_name": "Presa Venenosa de Kasaka",
+      "slot": "weapon",
+      "rank": "C",
+      "attack_bonus": 12,
+      "defense_bonus": 2,
+      "hp_bonus": 0,
+      "description": "Adaga forjada a partir da presa da serpente Kasaka. Afiada e letal.",
+      "icon": "res://assets/skills/skill_dagger.svg"
+    },
+    {
+      "id": "spider_carapace",
+      "display_name": "Carapaça de Buryura",
+      "slot": "accessory",
+      "rank": "C",
+      "attack_bonus": 0,
+      "defense_bonus": 8,
+      "hp_bonus": 40,
+      "description": "Placa de quitina resistente retirada da aranha gigante dos túneis.",
+      "icon": "res://assets/skills/skill_iron_shield.svg"
+    },
+    {
+      "id": "knight_blade",
+      "display_name": "Espada Longa de Igris",
+      "slot": "weapon",
+      "rank": "A",
+      "attack_bonus": 25,
+      "defense_bonus": 6,
+      "hp_bonus": 20,
+      "description": "Lâmina cerimonial vermelha do comandante da guarda das sombras.",
+      "icon": "res://assets/skills/skill_commander_blade.svg"
+    },
+    {
+      "id": "frost_ring",
+      "display_name": "Anel de Gelo de Baruka",
+      "slot": "accessory",
+      "rank": "S",
+      "attack_bonus": 8,
+      "defense_bonus": 14,
+      "hp_bonus": 60,
+      "description": "Jóia glacial pertencente ao senhor dos elfos de gelo do Portão Vermelho.",
+      "icon": "res://assets/icons/icon_essence.svg"
+    },
+    {
+      "id": "demon_fang",
+      "display_name": "Dente Flamejante de Cerberus",
+      "slot": "accessory",
+      "rank": "S",
+      "attack_bonus": 18,
+      "defense_bonus": 10,
+      "hp_bonus": 50,
+      "description": "Amuleto imbuído com as chamas do guardião do Castelo dos Demônios.",
+      "icon": "res://assets/icons/icon_boss.svg"
+    },
+    {
+      "id": "orb_avarice",
+      "display_name": "Orbe da Avareza",
+      "slot": "weapon",
+      "rank": "S",
+      "attack_bonus": 40,
+      "defense_bonus": 5,
+      "hp_bonus": 40,
+      "description": "Relíquia mágica arrancada de Kargalgan que amplifica todo o poder ofensivo.",
+      "icon": "res://assets/skills/skill_dominator.svg"
+    },
+    {
+      "id": "ant_king_mandible",
+      "display_name": "Mandíbula do Rei Beru",
+      "slot": "weapon",
+      "rank": "S",
+      "attack_bonus": 55,
+      "defense_bonus": 15,
+      "hp_bonus": 80,
+      "description": "Quadro quitinoso indestrutível do predador supremo da Ilha de Jeju.",
+      "icon": "res://assets/skills/skill_shadow_strike.svg"
+    },
+    {
+      "id": "monarch_collar",
+      "display_name": "Colar do Monarca Legia",
+      "slot": "accessory",
+      "rank": "S",
+      "attack_bonus": 20,
+      "defense_bonus": 30,
+      "hp_bonus": 150,
+      "description": "Grilhões rompidos do gigante ancestral de Tóquio.",
+      "icon": "res://assets/skills/skill_shadow_extract.svg"
+    },
+    {
+      "id": "dragon_heart",
+      "display_name": "Coração do Dragão da Destruição",
+      "slot": "accessory",
+      "rank": "S",
+      "attack_bonus": 60,
+      "defense_bonus": 35,
+      "hp_bonus": 250,
+      "description": "Essência primordial do Monarca da Destruição Antares.",
+      "icon": "res://assets/icons/icon_essence.svg"
+    }
+  ]
+}

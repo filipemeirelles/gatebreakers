@@ -5,7 +5,7 @@ extends Node
 signal state_changed
 
 ## Versão do schema persistido — SaveService usa para migração.
-const SCHEMA_VERSION: int = 3
+const SCHEMA_VERSION: int = 4
 ## Jinwoo + até três sombras (spec §4).
 const MAX_TEAM_SIZE: int = 4
 ## Caçadores contratáveis na equipe (além do Jinwoo).
@@ -36,6 +36,10 @@ var sweep_grant_done: bool = true
 var hunter_roster: Dictionary = {}
 ## caçadores na equipe (máx HUNTER_TEAM_SIZE, sem Jinwoo)
 var hunter_formation: Array = []
+## inventário de itens obtidos (Array de item_id)
+var inventory: Array = []
+## unit_id -> { "weapon": String, "accessory": String }
+var equipped: Dictionary = {}
 
 
 ## Aviso de recuperação de save a mostrar à UI (vazio = tudo bem).
@@ -99,6 +103,8 @@ func reset_to_new_game() -> void:
 	hunter_roster.clear()
 	hunter_formation = []
 	sweep_charges.clear()
+	inventory.clear()
+	equipped.clear()
 	story_cards_seen.clear()
 	rebuild_story_queue()
 	state_changed.emit()
@@ -131,7 +137,13 @@ func is_unlocked(unit_id: String) -> bool:
 
 
 func unit_stats(unit_id: String) -> Dictionary:
-	return unit_stats_at_level(unit_id, unit_level(unit_id))
+	var stats := unit_stats_at_level(unit_id, unit_level(unit_id))
+	var eq := get_equipped_stats(unit_id)
+	if not eq.is_empty():
+		stats["hp"] = int(stats.get("hp", 0)) + int(eq.get("hp", 0))
+		stats["attack"] = int(stats.get("attack", 0)) + int(eq.get("attack", 0))
+		stats["defense"] = int(stats.get("defense", 0)) + int(eq.get("defense", 0))
+	return stats
 
 
 ## Atributos de uma unidade num nível específico (para mostrar o previsto).
@@ -231,6 +243,7 @@ func red_dots() -> Dictionary:
 		"portals": int(afk_chest_status(int(Time.get_unix_time_from_system()))["available"]) > 0,
 		"hunter": hunter_ready,
 		"shadows": shadow_ready,
+		"items": has_unequipped_items_for_active_team(),
 	}
 
 
@@ -457,6 +470,122 @@ func upgrade_hunter_unit(hunter_id: String) -> Dictionary:
 	return { "ok": true, "level": int(entry["level"]) }
 
 
+# --- Equipamentos e Inventário (E2) ---
+
+func is_item_owned(item_id: String) -> bool:
+	return inventory.has(item_id)
+
+
+func add_item_to_inventory(item_id: String) -> bool:
+	var def := ContentDB.item(item_id)
+	if def.is_empty():
+		return false
+	if not inventory.has(item_id):
+		inventory.append(item_id)
+		state_changed.emit()
+		save_now()
+	return true
+
+
+func get_equipped(unit_id: String) -> Dictionary:
+	var entry: Dictionary = equipped.get(unit_id, {})
+	return {
+		"weapon": str(entry.get("weapon", "")),
+		"accessory": str(entry.get("accessory", "")),
+	}
+
+
+func get_equipped_stats(unit_id: String) -> Dictionary:
+	var eq := get_equipped(unit_id)
+	var atk := 0
+	var def := 0
+	var hp := 0
+	for slot in ["weapon", "accessory"]:
+		var item_id := str(eq.get(slot, ""))
+		if not item_id.is_empty():
+			var item_def := ContentDB.item(item_id)
+			if not item_def.is_empty():
+				atk += int(item_def.get("attack_bonus", 0))
+				def += int(item_def.get("defense_bonus", 0))
+				hp += int(item_def.get("hp_bonus", 0))
+	return { "attack": atk, "defense": def, "hp": hp }
+
+
+func item_equipped_by(item_id: String) -> Dictionary:
+	for uid in equipped:
+		var slots: Dictionary = equipped[uid]
+		for slot in ["weapon", "accessory"]:
+			if str(slots.get(slot, "")) == item_id:
+				return { "unit_id": uid, "slot": slot }
+	return {}
+
+
+func equip_item(unit_id: String, item_id: String) -> Dictionary:
+	if not is_item_owned(item_id):
+		return { "ok": false, "reason": "not_owned" }
+	var item_def := ContentDB.item(item_id)
+	if item_def.is_empty():
+		return { "ok": false, "reason": "invalid_item" }
+	var slot := str(item_def.get("slot", ""))
+	if slot != "weapon" and slot != "accessory":
+		return { "ok": false, "reason": "invalid_slot" }
+	if unit_id != "jinwoo" and not hunter_is_hired(unit_id):
+		return { "ok": false, "reason": "invalid_unit" }
+
+	var prev := item_equipped_by(item_id)
+	if not prev.is_empty():
+		var prev_uid := str(prev["unit_id"])
+		var prev_slot := str(prev["slot"])
+		if equipped.has(prev_uid):
+			equipped[prev_uid][prev_slot] = ""
+
+	if not equipped.has(unit_id):
+		equipped[unit_id] = { "weapon": "", "accessory": "" }
+	equipped[unit_id][slot] = item_id
+
+	state_changed.emit()
+	save_now()
+	return { "ok": true, "unit_id": unit_id, "slot": slot, "item_id": item_id }
+
+
+func unequip_slot(unit_id: String, slot: String) -> bool:
+	if slot != "weapon" and slot != "accessory":
+		return false
+	if not equipped.has(unit_id):
+		return false
+	if str(equipped[unit_id].get(slot, "")).is_empty():
+		return false
+	equipped[unit_id][slot] = ""
+	state_changed.emit()
+	save_now()
+	return true
+
+
+func has_unequipped_items_for_active_team() -> bool:
+	if inventory.is_empty():
+		return false
+	var team_members: Array = ["jinwoo"]
+	for h in hunter_formation:
+		team_members.append(h)
+	for uid in team_members:
+		var eq := get_equipped(uid)
+		var has_weapon := not str(eq.get("weapon", "")).is_empty()
+		var has_acc := not str(eq.get("accessory", "")).is_empty()
+		if not has_weapon:
+			for item_id in inventory:
+				if item_equipped_by(item_id).is_empty():
+					var it_def := ContentDB.item(item_id)
+					if str(it_def.get("slot", "")) == "weapon":
+						return true
+		if not has_acc:
+			for item_id in inventory:
+				if item_equipped_by(item_id).is_empty():
+					var it_def := ContentDB.item(item_id)
+					if str(it_def.get("slot", "")) == "accessory":
+						return true
+	return false
+
+
 func clear_gate(gate: int) -> void:
 	if gate != highest_gate_cleared + 1:
 		return
@@ -537,6 +666,11 @@ func apply_battle_victory(gate: int) -> Dictionary:
 		var cap := BalanceConfig.sweep_charges_cap()
 		var current := int(sweep_charges.get(str(gate), 0))
 		sweep_charges[str(gate)] = mini(current + BalanceConfig.sweep_charges_per_clear(), cap)
+	# Drop de equipamento em primeira vitória (E2):
+	var drop_id := str(gate_def.get("first_clear_drop_item", ""))
+	if advancing and not drop_id.is_empty():
+		add_item_to_inventory(drop_id)
+		rewards["item_drop"] = drop_id
 	clear_gate(gate)
 	save_now()
 	return rewards
@@ -701,6 +835,8 @@ func to_dict() -> Dictionary:
 		"hunter_formation": hunter_formation.duplicate(),
 		"sweep_charges": sweep_charges.duplicate(true),
 		"sweep_grant_done": sweep_grant_done,
+		"inventory": inventory.duplicate(),
+		"equipped": equipped.duplicate(true),
 	}
 
 
@@ -752,5 +888,23 @@ func from_dict(data: Dictionary) -> void:
 			if gate_key is String and gate_key.is_valid_int() and charges is int and int(charges) > 0:
 				sweep_charges[gate_key] = int(charges)
 	sweep_grant_done = bool(data.get("sweep_grant_done", true))
+	inventory.clear()
+	for it in data.get("inventory", []):
+		if it is String and ContentDB.item(String(it)).has("id"):
+			if not inventory.has(String(it)):
+				inventory.append(String(it))
+	equipped.clear()
+	var eq_raw: Variant = data.get("equipped", {})
+	if eq_raw is Dictionary:
+		for uid in eq_raw:
+			if uid is String and (uid == "jinwoo" or hunter_is_hired(uid)):
+				var slots: Variant = eq_raw[uid]
+				if slots is Dictionary:
+					var w: Variant = slots.get("weapon", "")
+					var a: Variant = slots.get("accessory", "")
+					equipped[uid] = {
+						"weapon": String(w) if w is String and inventory.has(String(w)) else "",
+						"accessory": String(a) if a is String and inventory.has(String(a)) else "",
+					}
 	rebuild_story_queue()
 	state_changed.emit()

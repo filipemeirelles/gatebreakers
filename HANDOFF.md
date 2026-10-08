@@ -61,9 +61,9 @@ Se o aparelho aparecer `unauthorized`: `adb kill-server; adb start-server` e ace
 godot --headless --path . res://tests/runner.tscn   # exit 0 = tudo passa, 1 = falha
 ```
 
-**Validação (07/10/2026): `=== RESULTADO: 370 passaram, 0 falharam ===`, exit 0.** Inclui habilidades determinísticas (recarga por ação própria, golpe de retaguarda, taunt com redução, cura de aliado mais ferido), caçadores contratáveis (Yoo Jinho, Song Chi-yul, Lee Joohee, Woo Jinchul), equipe combinada (Jinwoo + caçadores + até 2 sombras invocadas), varredura limitada por cargas, navegação de 5 abas baseada em mockups, e overlay de Perfil do Caçador. Smoke headless e export Android passam limpos (APK assinado).
+**Validação (07/10/2026): `=== RESULTADO: 419 passaram, 0 falharam ===`, exit 0.** Inclui habilidades determinísticas, caçadores contratáveis, cargas de varredura, navegação de 5 abas, overlay de Perfil do Caçador, e o sistema completo de Equipamentos & Inventário (10 armas/acessórios temáticos, drops de primeira vitória em chefes, bônus de ATK/DEF/HP refletidos no combate, slots arma/acessório, tela funcional de Itens e indicação no card de vitória). Smoke headless e export Android passam limpos (APK assinado).
 
-Suites (10): `test_save_service`, `test_navigation` (6 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`, `test_skills`, `test_hunters`.
+Suites (11): `test_save_service`, `test_navigation` (6 overlays), `test_combat_service`, `test_battle_screen`, `test_auto_farm`, `test_idle_rewards`, `test_upgrades`, `test_fase5`, `test_skills`, `test_hunters`, `test_items`.
 Observação: em erro de *parse* o processo Godot não termina → usar timeout no CI; correr `--import` primeiro se aparecer "Identifier not declared".
 
 ## 4. Estado das fases (spec §9)
@@ -80,6 +80,7 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 | 7 Ciclo PML v0.3 | implementação e teste de smoke no Android concluídos | auto-farm parou na derrota no Portal 8; baús resgatados; batalha mostrou morto em 0 HP e alvo vivo destacado; suíte 281/281 |
 | 8 Arte e progressão narrativa v0.4 | integração, suíte, export e smoke visual Android concluídos | suíte 292/292; APK `0.4.0`/`versionCode=4` instalado no `RXCT301TRHY`; save schema v2, Portal 8 atual |
 | 9 Habilidades, Caçadores e Mockups v0.5 | implementação, suíte e export Android concluídos | suíte 370/370; save schema v3; habilidades determinísticas, 4 caçadores contratáveis, cargas de varredura, 5 abas, overlay de Perfil; APK `0.5.0`/`versionCode=5` assinado |
+| 10 Equipamentos e Inventário v0.5.1 | implementação, suíte e export Android concluídos | suíte 419/419; save schema v4; 10 itens de marco, drops de chefe, slots de equipamento, bônus em combate, tela funcional de Itens e red dots; APK assinado |
 
 ## 5. Limitações conhecidas (aceites para o protótipo)
 
@@ -96,7 +97,7 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 - `scripts/autoload/game_state.gd` — todo o estado + regras de economia (fonte única).
 - `scripts/systems/save_service.gd` — gravação atómica, validação, migrações (`SCHEMA_VERSION`).
-- Save schema atual v3: caçadores contratados (`hunter_roster`, `hunter_formation`), cargas de varredura (`sweep_charges`), baús AFK; saves v1 e v2 migram automaticamente.
+- Save schema atual v4: caçadores contratados (`hunter_roster`, `hunter_formation`), cargas de varredura (`sweep_charges`), inventário e equipamentos (`inventory`, `equipped`), baús AFK; saves v1, v2 e v3 migram automaticamente.
 - `scripts/systems/combat_service.gd` — combate determinístico puro (sem RNG).
 - `scripts/systems/idle_reward_service.gd` — cálculo AFK puro.
 - `scripts/systems/auto_farm_controller.gd` — auto-limpeza foreground; regras/recompensas continuam nos services.
@@ -109,4 +110,4 @@ Observação: em erro de *parse* o processo Godot não termina → usar timeout 
 
 ## 7. Próximo passo
 
-Próximo passo: Etapa 2 do planejamento aprovado — Sistema de Equipamentos e Inventário (ativando a aba "Itens", drops de chefes e slots no card pós-batalha conforme `mockupcardbatalhas.png`).
+Próximo passo: Etapa 3 do planejamento aprovado — Missões do Sistema e Galeria de Lore (ativando as abas "Missões" e "História", com tarefas diárias do Sistema e registro dos cartões narrativos desbloqueados).

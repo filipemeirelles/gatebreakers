@@ -1,6 +1,18 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scenes/ui/locked_screen.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/ui/items_screen.gd" id="1_items"]
+
+[sub_resource type="StyleBoxFlat" id="CardStyle"]
+bg_color = Color(0.06, 0.08, 0.14, 0.96)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.25, 0.42, 0.6)
 
 [node name="ItemsScreen" type="Control"]
 layout_mode = 3
@@ -9,7 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+script = ExtResource("1_items")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -18,22 +30,131 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 96
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.486, 0.247, 0.949, 1)
-theme_override_font_sizes/font_size = 30
-text = "…"
+theme_override_font_sizes/font_size = 28
+text = "Arsenal e Itens"
 
-[node name="Hint" type="Label" parent="Margin/VBox"]
+[node name="Subtitle" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.78, 1)
+theme_override_font_sizes/font_size = 14
+text = "Equipamentos obtidos em chefes"
+
+[node name="HunterChipsScroll" type="ScrollContainer" parent="Margin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+vertical_scroll_mode = 0
+
+[node name="HunterChips" type="HBoxContainer" parent="Margin/VBox/HunterChipsScroll"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquippedCard" type="PanelContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("CardStyle")
+
+[node name="Margin" type="MarginContainer" parent="Margin/VBox/EquippedCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/EquippedCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="EquippedTitle" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+text = "Equipamentos de Sung Jinwoo"
+
+[node name="WeaponRow" type="HBoxContainer" parent="Margin/VBox/EquippedCard/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WeaponInfo" type="VBoxContainer" parent="Margin/VBox/EquippedCard/Margin/VBox/WeaponRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WeaponName" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox/WeaponRow/WeaponInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Arma: Vazio"
+
+[node name="WeaponStats" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox/WeaponRow/WeaponInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.78, 1)
+theme_override_font_sizes/font_size = 13
+text = "—"
+
+[node name="WeaponActionButton" type="Button" parent="Margin/VBox/EquippedCard/Margin/VBox/WeaponRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(96, 36)
+theme_override_font_sizes/font_size = 13
+text = "Desequipar"
+
+[node name="AccessoryRow" type="HBoxContainer" parent="Margin/VBox/EquippedCard/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AccessoryInfo" type="VBoxContainer" parent="Margin/VBox/EquippedCard/Margin/VBox/AccessoryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AccessoryName" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox/AccessoryRow/AccessoryInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Acessório: Vazio"
+
+[node name="AccessoryStats" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox/AccessoryRow/AccessoryInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.78, 1)
+theme_override_font_sizes/font_size = 13
+text = "—"
+
+[node name="AccessoryActionButton" type="Button" parent="Margin/VBox/EquippedCard/Margin/VBox/AccessoryRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(96, 36)
+theme_override_font_sizes/font_size = 13
+text = "Desequipar"
+
+[node name="TotalBonusLabel" type="Label" parent="Margin/VBox/EquippedCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 13
+text = "Bônus totais: +0 ATK · +0 DEF · +0 HP"
+
+[node name="InventoryTitle" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.486, 0.247, 0.949, 1)
+theme_override_font_sizes/font_size = 18
+text = "Mochila (0 itens)"
+
+[node name="InventoryEmpty" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.63, 0.72, 1)
-theme_override_font_sizes/font_size = 17
-text = "…"
+theme_override_font_sizes/font_size = 14
+text = "Nenhum item na mochila. Conclua portais para obter equipamentos!"
+autowrap_mode = 3
+
+[node name="InventoryScroll" type="ScrollContainer" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="InventoryList" type="VBoxContainer" parent="Margin/VBox/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8

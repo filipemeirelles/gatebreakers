@@ -106,6 +106,8 @@ func _refresh_red_dots() -> void:
 				visible = bool(dots.get("portals", false))
 			Destination.HUNTERS:
 				visible = bool(dots.get("hunter", false)) or bool(dots.get("shadows", false))
+			Destination.ITEMS:
+				visible = bool(dots.get("items", false))
 			_:
 				pass
 		badge.visible = visible

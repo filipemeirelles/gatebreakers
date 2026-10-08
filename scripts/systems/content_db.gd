@@ -8,11 +8,14 @@ const UNITS_DIR := "res://data/units/"
 const HUNTERS_DIR := "res://data/hunters/"
 const GATES_PATH := "res://data/gates/gates.json"
 const STORY_PATH := "res://data/story/story_cards.json"
+const ITEMS_PATH := "res://data/items/items.json"
 
 static var _units: Dictionary = {}
 static var _hunters: Dictionary = {}
 static var _hunter_order: Array = []
 static var _unit_order: Array = []
+static var _items: Dictionary = {}
+static var _item_order: Array = []
 static var _gate_rows: Array = []
 static var _gate_count: int = 0
 static var _story_cards: Array = []
@@ -42,6 +45,15 @@ static func _ensure_loaded() -> void:
 	var story_parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(STORY_PATH))
 	if story_parsed is Dictionary:
 		_story_cards = story_parsed.get("cards", [])
+	var items_file := FileAccess.get_file_as_string(ITEMS_PATH)
+	if not items_file.is_empty():
+		var items_parsed: Variant = JSON.parse_string(items_file)
+		if items_parsed is Dictionary:
+			for row in items_parsed.get("items", []):
+				if row is Dictionary and row.has("id"):
+					var item_id := String(row["id"])
+					_items[item_id] = row
+					_item_order.append(item_id)
 
 
 ## Cartões narrativos (spec §4): temas e gatilhos em dados editáveis.
@@ -89,6 +101,30 @@ static func all_hunters() -> Array:
 	var out: Array = []
 	for id in _hunter_order:
 		out.append(_hunters[id])
+	return out
+
+
+## Definições de equipamentos (itens de marco/chefes).
+static func item(item_id: String) -> Dictionary:
+	_ensure_loaded()
+	return _items.get(item_id, {})
+
+
+static func all_items() -> Array:
+	_ensure_loaded()
+	var out: Array = []
+	for id in _item_order:
+		out.append(_items[id])
+	return out
+
+
+static func items_for_slot(slot: String) -> Array:
+	_ensure_loaded()
+	var out: Array = []
+	for id in _item_order:
+		var it: Dictionary = _items[id]
+		if String(it.get("slot", "")) == slot:
+			out.append(it)
 	return out
 
 
@@ -155,4 +191,5 @@ static func gate(gate: int) -> Dictionary:
 		)),
 		"clear_unlocks_unit": row.get("clear_unlocks_unit"),
 		"first_clear_bonus": float(row.get("first_clear_bonus", 0.0)),
+		"first_clear_drop_item": str(row.get("first_clear_drop_item", "")),
 	}

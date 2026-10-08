@@ -182,7 +182,7 @@ static func _test_migration_v2(t: Node) -> void:
 	file.store_string(raw)
 	file.close()
 	var result := SaveService.load_state()
-	t.check(result["status"] == "loaded" and int(result["state"]["schema_version"]) == 3,
+	t.check(result["status"] == "loaded" and int(result["state"]["schema_version"]) == SaveService.SCHEMA_VERSION,
 		"save v2 migra para o schema atual")
 	GameState.from_dict(result["state"])
 	t.check(GameState.hunter_is_hired("yoojinho"), "migração v2→v3 contrata Jinho com progresso (P3 concluído)")
